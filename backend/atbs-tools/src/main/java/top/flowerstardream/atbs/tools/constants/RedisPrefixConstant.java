@@ -1,0 +1,16 @@
+package top.flowerstardream.atbs.tools.constants;
+
+/**
+ * @Author: 花海
+ * @Date: 2025/11/09/20:19
+ * @Description: Redis前缀常量
+ */
+public class RedisPrefixConstant {
+    public static final String USER_TOKEN_PREFIX = "auth:user:login:token:uid:";
+    public static final String AUTH_TOKEN_PREFIX = "auth:";
+    public static final String USER_BUSINESS_PREFIX = "user:";
+    public static final String AIRPLANE_BUSINESS_PREFIX = "airplane:";
+    public static final String ORDER_BUSINESS_PREFIX = "order:";
+    public static final String SYSTEM_BUSINESS_PREFIX = "system:";
+
+}

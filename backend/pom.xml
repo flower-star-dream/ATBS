@@ -16,6 +16,10 @@
     <modules>
         <module>atbs-gateway</module>
         <module>atbs-tools</module>
+        <module>auth-service</module>
+        <module>user-service</module>
+        <module>order-service</module>
+        <module>airplane-service</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -23,8 +27,178 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <revision>release-1.0.0</revision>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>atbs-tools</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-service</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>atbs-gateway</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-service</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-service</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-service</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Auth Service -->
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-ao</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-bo</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-boot</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>auth-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- User Service -->
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-ao</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-bo</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-boot</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>user-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Order Service -->
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-ao</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-bo</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-boot</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>order-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- AirPlane Service -->
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-ao</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-bo</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-boot</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.flowerstardream.atbs</groupId>
+                <artifactId>airplane-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
 		<plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
