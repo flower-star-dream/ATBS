@@ -8,14 +8,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import top.flowerstardream.atbs.user.ao.req.UserInfoREQ;
 import top.flowerstardream.atbs.user.ao.req.UserPageQueryREQ;
+import top.flowerstardream.atbs.user.ao.req.UserSynchronizeREQ;
+import top.flowerstardream.atbs.user.biz.client.AuthClient;
+import top.flowerstardream.atbs.user.biz.mapper.EmployeeMapper;
 import top.flowerstardream.atbs.user.biz.mapper.UserMapper;
 import top.flowerstardream.atbs.user.biz.service.IUserService;
+import top.flowerstardream.atbs.user.bo.eo.EmployeeEO;
 import top.flowerstardream.atbs.user.bo.eo.UserEO;
 import top.flowerstardream.base.ao.res.BaseStatusRES;
 import top.flowerstardream.base.properties.WeChatProperties;
@@ -30,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static top.flowerstardream.atbs.user.common.DefaultParams.Avatar;
 import static top.flowerstardream.atbs.user.common.UserRedisPrefixConstant.*;
 import static top.flowerstardream.base.exception.ExceptionEnum.*;
 
@@ -43,13 +49,11 @@ import static top.flowerstardream.base.exception.ExceptionEnum.*;
 @Service
 public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserEO> implements IUserService {
 
-    public static final String WX_LOGIN = "https://api.weixin.qq.com/sns/jscode2session";
+    @Resource
+    private AuthClient authClient;
 
     @Resource
     private UserMapper userMapper;
-
-    @Resource
-    private WeChatProperties weChatProperties;
 
     @Resource
     @Lazy
@@ -62,14 +66,15 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserEO> impleme
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateUserInfo(UserInfoREQ userInfoREQ) {
         UserEO user = new UserEO();
         BeanUtils.copyProperties(userInfoREQ, user);
-        boolean update = updateById(user);
-        if (!update) {
+        if (!self.updateById(user)) {
             log.error("更新当前登录用户信息失败：{}", user);
             throw MODIFICATION_FAILED.toException();
         }
+        toSynchronize(user, null);
     }
 
     @Override
@@ -102,37 +107,49 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserEO> impleme
     }
 
     /**
-     * 调取微信接口服务，获取微信用户的openid
-     * @param code
-     * @return
+     * 同步用户账号
+     * @param userSynchronizeREQ
      */
-    private String getOpenId(String code) {
-        Map<String, String> map = new HashMap<>();
-        map.put("appid", weChatProperties.getAppid());
-        map.put("secret", weChatProperties.getSecret());
-        map.put("js_code", code);
-        map.put("grant_type", "authorization_code");
-        String json = HttpClientUtil.doGet(WX_LOGIN, map);
-
-        JSONObject jsonObject = JSON.parseObject(json);
-        return jsonObject.getString("openid");
+    @Override
+    public void synchronize(UserSynchronizeREQ userSynchronizeREQ) {
+        log.info("同步用户账号: {}", userSynchronizeREQ);
+        UserEO userEO = self.getById(userSynchronizeREQ.getId());
+        if (userEO == null) {
+            log.warn("同步用户账号失败，用户账号不存在");
+            return;
+        }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getUsername())) {
+            userEO.setUsername(userSynchronizeREQ.getUsername());
+        }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getPhone())) {
+            userEO.setPhone(userSynchronizeREQ.getPhone());
+        }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getEmail())) {
+            userEO.setEmail(userSynchronizeREQ.getEmail());
+        }
+        if (userSynchronizeREQ.getStatus() != null) {
+            userEO.setStatus(userSynchronizeREQ.getStatus());
+        }
+        if (!self.updateById(userEO)) {
+            log.error("同步用户账号失败：{}", userEO);
+            throw MODIFICATION_FAILED.toException();
+        }
     }
 
+    /**
+     * 注册微信小程序用户
+     *
+     * @param userSynchronizeREQ
+     */
     @Override
-    public List<BaseStatusRES<BaseStatus>> getStatus() {
-        // 使用LambdaQueryWrapper进行分组统计
-        List<Map<String, Object>> statusCounts = userMapper.count();
-
-        // 将统计结果转换为BaseStatusRES列表
-        return statusCounts.stream()
-            .map(map -> {
-                BaseStatusRES<BaseStatus> statusRES = new BaseStatusRES<>();
-                statusRES.setStatus((BaseStatus) map.get("state"));
-                statusRES.setCount((Integer) map.get("count"));
-                statusRES.setDescription(statusRES.getStatus().getName());
-                return statusRES;
-            })
-            .collect(Collectors.toList());
+    public void wxRegister(UserSynchronizeREQ userSynchronizeREQ) {
+        UserEO user = new UserEO();
+        BeanUtils.copyProperties(userSynchronizeREQ, user);
+        user.setAvatar(Avatar);
+        if (!self.save(user)) {
+            log.error("新增员工账号失败：{}", user);
+            throw INSERTION_FAILED.toException();
+        }
     }
 
     /**
@@ -151,5 +168,13 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserEO> impleme
             .stream()
             .map(UserEO::getId)
             .toList();
+    }
+
+    private Long toSynchronize(UserEO userEO, String password) {
+        UserSynchronizeREQ userSynchronizeREQ = new UserSynchronizeREQ();
+        userSynchronizeREQ.setId(userEO.getId());
+        userSynchronizeREQ.setUsername(userEO.getUsername());
+        userSynchronizeREQ.setPhone(userEO.getPhone());
+        return authClient.synchronizationUserInfo(userSynchronizeREQ).getData();
     }
 }

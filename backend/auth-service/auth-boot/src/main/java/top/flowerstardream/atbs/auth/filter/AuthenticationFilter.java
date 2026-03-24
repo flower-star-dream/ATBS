@@ -24,10 +24,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static top.flowerstardream.atbs.tools.constants.CommonConstant.ROLE;
 import static top.flowerstardream.atbs.tools.constants.JwtClaimsConstant.ROLES;
 import static top.flowerstardream.base.utils.GetInfoUtil.*;
 import static top.flowerstardream.base.utils.GetInfoUtil.getOperatorId;
 
+/**
+ * @Author: 花海
+ * @Date: 2026/03/15/17:05
+ * @Description: 认证过滤器
+ */
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter extends OncePerRequestFilter {
@@ -46,14 +52,14 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             List<String> roles = getExtra(ROLES, List.class);
 
 
-            var authorities = roles != null ? roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+            Collection<SimpleGrantedAuthority> authorities = roles != null ? roles.stream()
+                .map(role -> new SimpleGrantedAuthority(ROLE + role))
                 .collect(Collectors.toList()) : List.of();
 
             var authentication = new UsernamePasswordAuthenticationToken(
                 new UserDetails(userId, username, getExtra(JwtClaimsConstant.CLIENT_TYPE, ClientType.class), roles),
                 null,
-                    (Collection<? extends GrantedAuthority>) authorities
+                authorities
             );
             authentication.setDetails(
                 new WebAuthenticationDetailsSource().buildDetails(request));

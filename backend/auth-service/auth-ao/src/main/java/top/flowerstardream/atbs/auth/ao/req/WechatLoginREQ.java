@@ -28,4 +28,10 @@ public class WechatLoginREQ implements Serializable {
     
     @Schema(description = "用户信息")
     private UserInfoREQ userInfo;
+
+    @Schema(description = "加密数据")
+    private String encryptedData;
+
+    @Schema(description = "初始化向量")
+    private String iv;
 }

@@ -10,15 +10,16 @@
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
     <artifactId>airplane-api</artifactId>
-    <version>${revision}</version>
+
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <name>airplane-api</name>
-    <description>班次服务API模块 - 存放接口定义</description>
+    <description>航空服务API模块 - 存放接口定义</description>
 
     <dependencies>
         <dependency>

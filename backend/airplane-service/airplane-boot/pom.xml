@@ -13,6 +13,7 @@
 
     <artifactId>airplane-boot</artifactId>
     <version>${revision}</version>
+    <name>airplane-boot</name>
     <description>航空资源调配服务启动模块</description>
 
     <properties>

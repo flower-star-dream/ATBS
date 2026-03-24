@@ -7,8 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import top.flowerstardream.atbs.tools.config.FeignClientConfig;
 
 /**
  * @author 花海
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "top.flowerstardream.atbs.auth",
         "top.flowerstardream.atbs.tools"
 })
+@ComponentScan(excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = FeignClientConfig.class))
 @EnableDiscoveryClient //开启服务注册与发现
 @EnableFeignClients
 @EnableTransactionManagement //开启注解方式的事务管理

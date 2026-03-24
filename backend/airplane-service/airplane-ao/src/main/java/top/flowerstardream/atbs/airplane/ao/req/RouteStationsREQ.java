@@ -35,5 +35,5 @@ public class RouteStationsREQ implements Serializable {
     private Integer stationSorting;
 
     @Schema(description = "是否初始化")
-    private Boolean init = false;
+    private Boolean init;
 }

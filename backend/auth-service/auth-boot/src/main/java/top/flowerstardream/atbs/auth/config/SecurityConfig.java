@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import top.flowerstardream.atbs.auth.filter.AuthenticationFilter;
 
 /**
@@ -26,23 +27,33 @@ import top.flowerstardream.atbs.auth.filter.AuthenticationFilter;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    @Resource
+    private AuthenticationFilter authenticationFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/*/v*/*/**").permitAll()
-                .requestMatchers("/css/**", "/js/**", "/fonts/**", "/index").permitAll()
+                // OAuth2公开端点
+                .requestMatchers("/oauth/*").permitAll()
+                .requestMatchers("/api/*/v1/auth/sms/send").permitAll()
+                .requestMatchers(".well-known/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                // 内部端点需限制
+                .requestMatchers("/oauth2/introspect").permitAll()
+                // 其余需认证
                 .anyRequest().authenticated())
         .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
+            .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 }

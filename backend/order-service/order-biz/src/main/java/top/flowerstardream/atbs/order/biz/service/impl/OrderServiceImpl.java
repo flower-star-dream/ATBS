@@ -47,10 +47,7 @@ import top.flowerstardream.base.utils.WeChatPayUtil;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -85,8 +82,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Resource
-    private WeChatPayUtil weChatPayUtil;
+//    @Resource
+//    private WeChatPayUtil weChatPayUtil;
 
     @AutoStateMachine
     private StateMachine<OrderStatus, OrderEvent, OrderEO> fsm;
@@ -115,7 +112,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
         // 2. 幂等性校验, 10s内视为同一订单，不能重复创建订单
         String lockKey = ORDER_REPEAT_PREFIX + userId;
         Boolean firstAccess = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(10));
-        if (!Objects.equals(firstAccess, false)) {
+        if (Boolean.TRUE.equals(firstAccess)) {
             throw ORDER_REPEAT_CREATE.toException();
         }
 
@@ -267,7 +264,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
             if (CollUtil.isNotEmpty(userIds)) {
                 queryWrapper.in(OrderEO::getUserId, userIds);
             } else {
-                queryWrapper.eq(OrderEO::getUserId, -1);
+                queryWrapper.eq(OrderEO::getUserId, Optional.of(-1));
             }
         }
         if (req.getId() != null) {

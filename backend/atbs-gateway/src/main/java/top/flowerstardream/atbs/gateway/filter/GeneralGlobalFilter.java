@@ -14,7 +14,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import top.flowerstardream.atbs.gateway.client.AuthClient;
 import top.flowerstardream.atbs.tools.utils.JwtValidator;
 import top.flowerstardream.base.properties.JwtProperties;
 import top.flowerstardream.base.properties.MyGatewayProperties;
@@ -41,13 +40,10 @@ public class GeneralGlobalFilter implements GlobalFilter {
     private JwtProperties jwtProperties;
     
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     private MyGatewayProperties myGatewayProperties;
-
-    @Resource
-    private AuthClient authClient;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -81,7 +77,7 @@ public class GeneralGlobalFilter implements GlobalFilter {
                 authHeader,
                 clientTypeHeader,
                 jwtProperties,
-                redisTemplate);
+                stringRedisTemplate);
 
         log.info("【网关】JWT校验完成 - valid={}, msg={}", vr.isValid(), vr.getMsg());
 
@@ -94,9 +90,6 @@ public class GeneralGlobalFilter implements GlobalFilter {
         Integer clientType = vr.getClientType().getCode();
         Long userId = vr.getUserId();
         String username = vr.getUsername();
-
-        // 3. TODO 调用鉴权服务做鉴权
-        authClient.auth(vr.getToken(), clientType, userId, username);
 
         // 4. 将用户信息传递到下游服务（通过Header）
         ServerHttpRequest mutatedRequest = request.mutate()

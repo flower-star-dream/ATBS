@@ -72,8 +72,6 @@ public interface ISeatReservationService extends IBaseService<SeatReservationEO>
      */
     ReserveSeatResultDTO reserveSeat(ReserveSeatDTO reserveSeatDTO);
 
-    List<BaseStatusRES<BaseStatus>> getStatus();
-
     /**
      * 批量更新座位预约状态
      *

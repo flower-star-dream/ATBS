@@ -1,15 +1,20 @@
 package top.flowerstardream.atbs.tools.resolver;
 
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Component;
-import top.flowerstardream.atbs.tools.client.UserClient;
+import top.flowerstardream.atbs.tools.client.AuthClient;
+import top.flowerstardream.atbs.tools.interfaces.IUserResolveService;
+import top.flowerstardream.base.handler.MyMetaObjectHandler;
 import top.flowerstardream.base.resolver.UserNameResolver;
 
 import java.nio.charset.StandardCharsets;
@@ -26,14 +31,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "spring.application.name", havingValue = "user-service", matchIfMissing = true)
+@ConditionalOnClass({MybatisPlusInterceptor.class, MyMetaObjectHandler.class})
+@RequiredArgsConstructor
 public class RemoteUserNameResolver implements UserNameResolver {
-    
-    @Resource
-    private UserClient userClient;
+
+    private final IUserResolveService iUserResolveService;
 
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
     
     private static final String KEY_PREFIX = "sys:user:name:";
     private static final Duration TTL = Duration.ofHours(24);
@@ -52,7 +57,7 @@ public class RemoteUserNameResolver implements UserNameResolver {
             .map(id -> KEY_PREFIX + id)
             .collect(Collectors.toList());
         
-        List<String> cached = redisTemplate.opsForValue().multiGet(keys);
+        List<String> cached = stringRedisTemplate.opsForValue().multiGet(keys);
         int idx = 0;
         for (Long id : userIds) {
             String name = null;
@@ -68,7 +73,7 @@ public class RemoteUserNameResolver implements UserNameResolver {
         
         // 2. 缺失的远程调用用户服务
         if (!missingIds.isEmpty()) {
-            Map<Long, String> fromRemote = userClient.batchGetNames(new ArrayList<>(missingIds)).getData();
+            Map<Long, String> fromRemote = iUserResolveService.batchGetNames(new ArrayList<>(missingIds)).getData();
             result.putAll(fromRemote);
             
             // 3. 异步写入本地Redis
@@ -85,7 +90,7 @@ public class RemoteUserNameResolver implements UserNameResolver {
 
         CompletableFuture.runAsync(() -> {
             try {
-                redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+                stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
                     data.forEach((id, name) -> {
                         byte[] key = (KEY_PREFIX + id).getBytes(StandardCharsets.UTF_8);
                         byte[] val = name.getBytes(StandardCharsets.UTF_8);

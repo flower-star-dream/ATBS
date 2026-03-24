@@ -42,8 +42,8 @@ public class OrderRouter extends ServiceImpl<OrderMapper, OrderEO> implements IS
     @Resource
     private ITicketService ticketService;
 
-    @Resource
-    private WeChatPayUtil weChatPayUtil;
+//    @Resource
+//    private WeChatPayUtil weChatPayUtil;
 
     @Resource
     @Lazy

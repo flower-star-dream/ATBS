@@ -1,12 +1,11 @@
 spring:
   application:
-    name: atbs-user
+    name: user-service
   profiles:
     active: dev
   config:
     import:
       - nacos:atbs-common
-      - nacos:${spring.application.name}
   cloud:
     nacos:
       server-addr: 103.115.43.55:8848

@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import top.flowerstardream.atbs.user.ao.req.*;
+import top.flowerstardream.atbs.user.biz.client.AuthClient;
 import top.flowerstardream.atbs.user.biz.mapper.EmployeeMapper;
 import top.flowerstardream.atbs.user.biz.service.IEmployeeService;
 import top.flowerstardream.atbs.user.bo.eo.EmployeeEO;
@@ -41,13 +44,12 @@ import static top.flowerstardream.base.state.BaseStatus.*;
  * @Date: 2025/10/26/21:57
  * @Description: 后管员工服务实现类
  */
-// TODO 鉴权数据库
 @Slf4j
 @Service
 public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, EmployeeEO> implements IEmployeeService {
 
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private AuthClient authClient;
 
     @Resource
     private EmployeeMapper employeeMapper;
@@ -69,6 +71,7 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
      * @param employeeInfoREQ
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateInfo(EmployeeInfoREQ employeeInfoREQ) {
         EmployeeEO employee = new EmployeeEO();
         BeanUtils.copyProperties(employeeInfoREQ, employee);
@@ -77,6 +80,7 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
             log.error("更新当前登录用户信息失败：{}", employee);
             throw MODIFICATION_FAILED.toException();
         }
+        toSynchronize(employee, null);
     }
 
     /**
@@ -140,7 +144,7 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
             if (employee == null) {
                 return;
             }
-            if (Objects.equals(employee.getStatus(), ENABLE.getCode())) {
+            if (ENABLE.equals(employee.getStatus())) {
                 throw USER_STATUS_ENABLE.toException();
             }
         });
@@ -158,16 +162,16 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
      * @param employeeREQ
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void add(EmployeeREQ employeeREQ) {
         validateEmployeeIsNotEmpty(employeeREQ.getUsername(), employeeREQ.getPhone());
         EmployeeEO employee = new EmployeeEO();
         BeanUtils.copyProperties(employeeREQ, employee);
-        if (employeeREQ.getId() != null) {
-            employee.setId(null);
-        }
+        employee.setId(null);
+        Long userId = toSynchronize(employee, employeeREQ.getPassword());
+        employee.setId(userId);
         employee.setAvatar(Avatar);
-        boolean save = save(employee);
-        if (!save) {
+        if (!self.save(employee)) {
             log.error("新增员工账号失败：{}", employee);
             throw INSERTION_FAILED.toException();
         }
@@ -179,15 +183,44 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
      * @param employeeREQ
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void update(EmployeeREQ employeeREQ) {
         validateEmployeeIsEmpty(employeeREQ.getUsername(), employeeREQ.getPhone());
         log.info("更新当前登录用户id：{}", employeeREQ.getId());
         EmployeeEO employee = new EmployeeEO();
         BeanUtils.copyProperties(employeeREQ, employee);
         log.info("更新当前登录用户信息：{}", employee);
-        boolean update = updateById(employee);
+        boolean update = self.updateById(employee);
         if (!update) {
             log.error("更新员工账号失败：{}", employee);
+            throw MODIFICATION_FAILED.toException();
+        }
+        toSynchronize(employee, employeeREQ.getPassword());
+    }
+
+    /**
+     * 同步员工账号
+     * @param userSynchronizeREQ
+     */
+    @Override
+    public void synchronize(UserSynchronizeREQ userSynchronizeREQ) {
+        log.info("同步员工账号: {}", userSynchronizeREQ);
+        EmployeeEO employee = self.getById(userSynchronizeREQ.getId());
+        if (employee == null) {
+            log.warn("同步员工账号失败，员工账号不存在");
+            return;
+        }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getUsername())) {
+            employee.setUsername(userSynchronizeREQ.getUsername());
+        }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getPhone())) {
+            employee.setPhone(userSynchronizeREQ.getPhone());
+        }
+        if (userSynchronizeREQ.getStatus() != null) {
+            employee.setStatus(userSynchronizeREQ.getStatus());
+        }
+        if (!self.updateById(employee)) {
+            log.error("同步员工账号失败：{}", employee);
             throw MODIFICATION_FAILED.toException();
         }
     }
@@ -237,20 +270,12 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
         throw USER_ALREADY_EXISTS.toException();
     }
 
-    @Override
-    public List<BaseStatusRES<BaseStatus>> getStatus() {
-        // 使用LambdaQueryWrapper进行分组统计
-        List<Map<String, Object>> statusCounts = employeeMapper.count();
-
-        // 将统计结果转换为BaseStatusRES列表
-        return statusCounts.stream()
-            .map(map -> {
-                BaseStatusRES<BaseStatus> statusRES = new BaseStatusRES<>();
-                statusRES.setStatus((BaseStatus) map.get("state"));
-                statusRES.setCount((Integer) map.get("count"));
-                statusRES.setDescription(String.valueOf(statusRES.getStatus().getName()));
-                return statusRES;
-            })
-            .collect(Collectors.toList());
+    private Long toSynchronize(EmployeeEO employeeEO, String password) {
+        UserSynchronizeREQ userSynchronizeREQ = new UserSynchronizeREQ();
+        userSynchronizeREQ.setId(employeeEO.getId());
+        userSynchronizeREQ.setUsername(employeeEO.getUsername());
+        userSynchronizeREQ.setPassword(password);
+        userSynchronizeREQ.setPhone(employeeEO.getPhone());
+        return authClient.synchronizationUserInfo(userSynchronizeREQ).getData();
     }
 }

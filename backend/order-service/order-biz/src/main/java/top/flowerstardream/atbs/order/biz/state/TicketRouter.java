@@ -46,8 +46,8 @@ public class TicketRouter extends ServiceImpl<TicketMapper, TicketEO> implements
     @Resource
     private IOrderService orderService;
 
-    @Resource
-    private WeChatPayUtil weChatPayUtil;
+//    @Resource
+//    private WeChatPayUtil weChatPayUtil;
 
     @Resource
     private AirplaneClient airplaneClient;

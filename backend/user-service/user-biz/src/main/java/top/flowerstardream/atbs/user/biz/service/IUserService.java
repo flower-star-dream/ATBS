@@ -3,6 +3,7 @@ package top.flowerstardream.atbs.user.biz.service;
 
 import top.flowerstardream.atbs.user.ao.req.UserInfoREQ;
 import top.flowerstardream.atbs.user.ao.req.UserPageQueryREQ;
+import top.flowerstardream.atbs.user.ao.req.UserSynchronizeREQ;
 import top.flowerstardream.atbs.user.bo.eo.UserEO;
 import top.flowerstardream.base.ao.res.BaseStatusRES;
 import top.flowerstardream.base.result.PageResult;
@@ -43,17 +44,22 @@ public interface IUserService extends IBaseService<UserEO> {
     PageResult<UserEO> list(UserPageQueryREQ queryREQ);
 
     /**
-     * 获取用户状态列表
-     *
-     * @return 用户状态列表
-     */
-    List<BaseStatusRES<BaseStatus>> getStatus();
-
-    /**
      * 根据用户名获取用户ID列表
      *
      * @param name 用户名
      * @return 用户ID列表
      */
     List<Long> getUserIdsByName(String name);
+
+    /**
+     * 同步用户信息
+     * @param userSynchronizeREQ
+     */
+    void synchronize(UserSynchronizeREQ userSynchronizeREQ);
+
+    /**
+     * 注册微信小程序用户
+     * @param userSynchronizeREQ
+     */
+    void wxRegister(UserSynchronizeREQ userSynchronizeREQ);
 }

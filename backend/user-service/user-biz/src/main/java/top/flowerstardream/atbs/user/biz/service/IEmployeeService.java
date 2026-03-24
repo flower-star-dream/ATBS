@@ -56,8 +56,8 @@ public interface IEmployeeService extends IBaseService<EmployeeEO> {
     void update(EmployeeREQ employeeREQ);
 
     /**
-     * 获取员工状态
-     * @return
+     * 同步员工信息
+     * @param userSynchronizeREQ
      */
-    List<BaseStatusRES<BaseStatus>> getStatus();
+    void synchronize(UserSynchronizeREQ userSynchronizeREQ);
 }

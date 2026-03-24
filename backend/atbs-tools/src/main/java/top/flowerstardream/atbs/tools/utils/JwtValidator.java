@@ -66,11 +66,9 @@ public class JwtValidator {
         }
 
         // 3. 解析 JWT
-        Claims claims;
-        try {
-            claims = JwtUtil.getClaimsBody(secret, rawToken);
-        } catch (Exception e) {
-            log.warn("JWT解析失败", e);
+        Claims claims = JwtUtil.getClaimsBody(secret, rawToken);
+        if (claims == null) {
+            log.warn("JWT解析失败");
             return ValidateResult.builder().valid(false).msg("Token无效").build();
         }
         int verify = JwtUtil.verifyToken(claims, prop.getTokens().get(clientName).getRefreshTime());
@@ -83,12 +81,8 @@ public class JwtValidator {
         String usernameClaim = JwtClaimsConstant.OPERATOR_NAME;
         Long userId;
         String username;
-        if (claims != null) {
-            userId = claims.get(idClaim, Long.class);
-            username = claims.get(usernameClaim, String.class);
-        } else {
-            return ValidateResult.builder().valid(false).msg("Token无效").build();
-        }
+        userId = claims.get(idClaim, Long.class);
+        username = claims.get(usernameClaim, String.class);
 
         // 5. Redis 存在性
         String redisKey = USER_TOKEN_PREFIX + userId;

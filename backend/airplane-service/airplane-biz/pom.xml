@@ -4,6 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>top.flowerstardream.atbs</groupId>
         <artifactId>airplane-service</artifactId>
@@ -17,7 +18,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <description>列车资源调配模块 - 存放业务逻辑代码</description>
+    <name>airplane-biz</name>
+    <description>航空资源调配模块 - 存放业务逻辑代码</description>
     <dependencies>
         <dependency>
             <groupId>top.flowerstardream.atbs</groupId>

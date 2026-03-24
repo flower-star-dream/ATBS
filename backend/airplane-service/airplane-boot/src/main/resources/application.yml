@@ -1,31 +1,27 @@
 spring:
   application:
-    name: hcd-trainSeat
+    name: airplane-service
   profiles:
     active: dev
   config:
     import:
-      - nacos:hcd-common
+      - nacos:atbs-common
   cloud:
     nacos:
-      server-addr: localhost:8847
+      server-addr: 103.115.43.55:8848
       username: nacos
       password: nacos_040329
       config:
-        namespace: 8a19b7dd-7c6e-4a98-8bcf-b81ebd4aad2c
+        namespace: 80338282-5c6a-4b82-89d4-5c90adfd6997
         group: DEFAULT_GROUP
         file-extension: yaml
       discovery:
-        ip: 127.0.0.1
-        port: ${server.port}
-        namespace: 8a19b7dd-7c6e-4a98-8bcf-b81ebd4aad2c
+        ip: 103.115.43.55
+        port: 8848
+        namespace: 80338282-5c6a-4b82-89d4-5c90adfd6997
         group: DEFAULT_GROUP
-  datasource:
-    url: jdbc:mysql://localhost:3306/hcd_train_seat?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=GMT%2B8
-    username: root
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
+other:
+  data-base-name: airplane_db
 # 设置端口
 server:
-  port: 8082
+  port: 8084

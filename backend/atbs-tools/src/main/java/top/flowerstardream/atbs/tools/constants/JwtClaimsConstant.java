@@ -1,9 +1,6 @@
 package top.flowerstardream.atbs.tools.constants;
 
-import jakarta.annotation.Resource;
 import lombok.Getter;
-import org.springframework.stereotype.Component;
-import top.flowerstardream.base.properties.JwtProperties;
 
 /**
  * @Author: 花海
@@ -16,4 +13,7 @@ public class JwtClaimsConstant {
     public final static String OPERATOR_NAME = "operatorName";
     public final static String CLIENT_TYPE = "clientType";
     public final static String ROLES = "roles";
+    public final static String SUB = "sub";
+    public final static String CLIENT_ID = "client_id";
+    public final static String SCOPE = "scope";
 }

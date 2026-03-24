@@ -357,27 +357,6 @@ public class SeatReservationServiceImpl extends BaseServiceImpl<SeatReservationM
     }
 
     /**
-     * 获取状态列表
-     * @return
-     */
-    @Override
-    public List<BaseStatusRES<BaseStatus>> getStatus() {
-        // 使用LambdaQueryWrapper进行分组统计
-        List<Map<String, Object>> statusCounts = seatReservationMapper.count();
-
-        // 将统计结果转换为BaseStatusRES<BaseStatus>列表
-        return statusCounts.stream()
-            .map(map -> {
-                BaseStatusRES<BaseStatus> statusRES = new BaseStatusRES<>();
-                statusRES.setStatus((BaseStatus) map.get("status"));
-                statusRES.setCount((Integer) map.get("count"));
-                statusRES.setDescription(statusRES.getStatus().getName());
-                return statusRES;
-            })
-            .collect(Collectors.toList());
-    }
-
-    /**
      * 批量更新座位预约状态
      *
      * @param seatReservationChangeStatusREQ 批量更新座位预约状态参数

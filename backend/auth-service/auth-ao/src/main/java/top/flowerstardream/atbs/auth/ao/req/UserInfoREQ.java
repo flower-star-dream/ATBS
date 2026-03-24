@@ -21,18 +21,21 @@ import java.io.Serializable;
 @Schema(description = "用户信息请求")
 public class UserInfoREQ implements Serializable {
 
-    @Schema(description = "用户ID")
-    private Long userId;
+    @Schema(description = "统一用户ID")
+    private Long id;
+
+    @Schema(description = "用户名")
+    private String username;
+
+    @Schema(description = "手机号")
+    private String phone;
+
+    @Schema(description = "邮箱")
+    private String email;
 
     @Schema(description = "用户昵称")
     private String nickname;
-    
-    @Schema(description = "用户头像")
-    private String avatar;
-    
-    @Schema(description = "手机号")
-    private String phone;
-    
-    @Schema(description = "邮箱")
-    private String email;
+
+    @Schema(description = "用户头像Url")
+    private String avatarUrl;
 }

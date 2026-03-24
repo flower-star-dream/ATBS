@@ -19,6 +19,8 @@ import top.flowerstardream.base.utils.JwtUtil;
 import top.flowerstardream.base.utils.TtlContextHolder;
 import top.flowerstardream.base.utils.WhiteListUtil;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static top.flowerstardream.atbs.tools.constants.TransmitConstant.CLIENT_TYPE;
@@ -56,7 +58,8 @@ public class TtlContextInterceptor implements HandlerInterceptor {
         // 2. 获取业务端，判断是否OpenFeign调用，是则直接放行
         int clientTypeHeader = Integer.parseInt(request.getHeader(CLIENT_TYPE));
         ClientType clientType = ClientType.fromCode(clientTypeHeader);
-        Map<String, Object> extraData = Map.of(JwtClaimsConstant.CLIENT_TYPE, clientType);
+        Map<String, Object> extraData = new HashMap<>();
+        extraData.put(JwtClaimsConstant.CLIENT_TYPE, clientType);
         ctx.setExtraData(extraData);
         if (ClientType.SYSTEM.equals(clientType)) {
             String operatorId = request.getHeader(OPERATOR_ID);
@@ -84,7 +87,7 @@ public class TtlContextInterceptor implements HandlerInterceptor {
         String secret = jwtProperties.getTokens().get(clientType.getName()).getSecretKey();
         // 5. 解析token
         if (token != null && token.startsWith(TOKEN_HEADER)) {
-            Claims claims = JwtUtil.getClaimsBody(secret, token.substring(7));
+            Claims claims = JwtUtil.getClaimsBody(secret, token.substring(TOKEN_HEADER.length()));
             // 6. 封装TTL上下文
             String operatorId = JwtClaimsConstant.OPERATOR_ID;
             String operatorName = JwtClaimsConstant.OPERATOR_NAME;
@@ -103,6 +106,12 @@ public class TtlContextInterceptor implements HandlerInterceptor {
                 }
             }
             ctx.setToken(token);
+            // 在TtlContextInterceptor.preHandle()第6步后添加：
+            List<String> roles = claims.get(JwtClaimsConstant.ROLES, List.class);
+            if (roles != null) {
+                extraData.put(JwtClaimsConstant.ROLES, roles);
+                ctx.setExtraData(extraData);
+            }
             TtlContextHolder.set(ctx);
         }
         // 7. 放行

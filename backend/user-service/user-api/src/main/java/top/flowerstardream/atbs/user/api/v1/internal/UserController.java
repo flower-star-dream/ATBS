@@ -6,6 +6,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import top.flowerstardream.atbs.user.ao.req.UserSynchronizeREQ;
 import top.flowerstardream.atbs.user.bo.dto.UserDTO;
 import top.flowerstardream.atbs.user.biz.service.IUserService;
 import top.flowerstardream.atbs.user.bo.eo.UserEO;
@@ -51,5 +52,16 @@ public class UserController {
         log.info("【用户-服务】traceId:{}, 获取用户id, 用户名：{}", getTraceId(), name);
         List<Long> userIds = userService.getUserIdsByName(name);
         return Result.successResult(userIds);
+    }
+
+    /**
+     * 注册微信小程序用户
+     * @param userSynchronizeREQ
+     */
+    @PostMapping("/wxRegister")
+    Result<Void> wxRegister(@RequestParam UserSynchronizeREQ userSynchronizeREQ){
+        log.info("【用户-服务】traceId:{}, 注册微信小程序用户, 微信openid：{}", getTraceId(), userSynchronizeREQ.getOpenid());
+        userService.wxRegister(userSynchronizeREQ);
+        return Result.successResult();
     }
 }

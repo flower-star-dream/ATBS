@@ -13,7 +13,7 @@
     <!-- 3. 文件（按天滚动） -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- 当前正在写的文件 -->
-        <file>logs/${APP_NAME}/${APP_NAME}.log</file>
+        <file>backend/logs/${APP_NAME}/${APP_NAME}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 历史文件 -->
             <fileNamePattern>logs/${APP_NAME}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
@@ -25,6 +25,7 @@
     </appender>
 
     <!-- 4. 级别配置（与 yml 完全一致） -->
+    <logger name="top.flowerstardream.base" level="DEBUG"/>
     <logger name="top.flowerstardream.atbs" level="DEBUG"/>
     <logger name="org.springframework.web" level="DEBUG"/>
     <logger name="com.alibaba.cloud.nacos" level="DEBUG"/>
