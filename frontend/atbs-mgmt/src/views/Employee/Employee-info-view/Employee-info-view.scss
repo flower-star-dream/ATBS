@@ -1,0 +1,372 @@
+@use '@/styles/global.scss';
+
+.employee-info-view {
+  padding: 20px;
+  // min-height: 100%;
+  background-color: #f5f7fa;
+
+  .page-container {
+    height: 100%;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+    &:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+      position: relative;
+
+      &::after {
+        content: '';
+        display: block;
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #409eff 0%, #67c23a 100%);
+        margin: 10px auto 0;
+        border-radius: 3px;
+      }
+    }
+  }
+
+  // 水平布局容器 - 确保头像在左侧，表单在右侧
+  .horizontal-layout {
+    display: flex;
+    align-items: stretch; // 使子元素高度拉伸一致
+    gap: 40px;
+    width: 100%;
+  }
+
+  // 头像部分样式 - 增加宽度，添加容器底板，垂直居中
+  .avatar-section {
+    flex-shrink: 0;
+    width: 260px; // 保持头像区域宽度
+    // 添加与表单相同的容器底板样式
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    // 移除固定高度，让它自然拉伸以匹配右侧表单
+  }
+
+  // 头像容器
+  .avatar-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .avatar-uploader-icon {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: #909399;
+      background-color: #f5f7fa;
+      border: 2px dashed #dcdfe6;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: #409eff;
+        border-color: #409eff;
+      }
+    }
+
+    .avatar-uploader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+
+      &:hover .avatar-upload-overlay {
+        opacity: 1;
+      }
+
+      .avatar-upload-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+
+        .upload-icon {
+          font-size: 32px;
+          color: #ffffff;
+          margin-bottom: 8px;
+        }
+
+        .upload-text {
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  // 昵称显示区域样式
+  .nickname-display {
+    text-align: center;
+    width: 100%;
+
+    .nickname-label {
+      font-size: 14px;
+      color: #606266;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .nickname-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      word-break: break-word;
+      padding: 0 10px;
+      transition: color 0.3s ease;
+      
+      // 当有表单输入时添加强调效果
+      &:not(:contains('未设置昵称')) {
+        color: #409eff;
+      }
+    }
+  }
+
+  // 表单部分样式 - 在右侧并占据剩余空间
+  .form-section {
+    flex: 1;
+    min-width: 0; // 防止内容溢出
+
+    .form-container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      width: 100%;
+      // 移除固定高度，让内容决定高度
+
+      .el-form-item {
+        margin-bottom: 24px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .el-form-item__label {
+          font-weight: 500;
+          color: #606266;
+          font-size: 15px;
+          padding: 0;
+        }
+
+        .el-input {
+          &.is-disabled .el-input__inner {
+            background-color: #f5f7fa;
+            color: #909399;
+            border-color: #e4e7ed;
+          }
+
+          .el-input__inner {
+            transition: all 0.3s ease;
+            font-size: 15px;
+            height: 42px;
+            border-radius: 6px;
+            border: 1px solid #dcdfe6;
+
+            &:hover {
+              border-color: #c0c4cc;
+            }
+
+            &:focus {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+            }
+          }
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 30px;
+
+        .el-button {
+          padding: 10px 24px;
+          font-size: 14px;
+          border-radius: 6px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+          }
+
+          &.el-button--primary {
+            background-color: #409eff;
+            border-color: #409eff;
+
+            &:hover {
+              background-color: #66b1ff;
+              border-color: #66b1ff;
+              box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计 - 小屏幕设备下改为垂直布局
+@media (max-width: 768px) {
+  .employee-info-view {
+    padding: 10px;
+
+    .page-container {
+      padding: 20px 15px;
+    }
+
+    .header h2 {
+      font-size: 20px;
+    }
+
+    // 在小屏幕上改为垂直布局
+    .horizontal-layout {
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .avatar-section {
+      width: 100%;
+      max-width: 260px;
+      padding: 20px;
+
+      .avatar-container {
+        width: 150px;
+        height: 150px;
+      }
+    }
+
+    .form-section {
+      width: 100%;
+
+      .form-container {
+        padding: 20px;
+
+        .el-form {
+          label-width: 100px;
+
+          .el-form-item__label {
+            font-size: 14px;
+          }
+
+          .el-input .el-input__inner {
+            font-size: 14px;
+            height: 38px;
+          }
+        }
+
+        .form-actions {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+
+          .el-button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 适配平板设备
+@media (min-width: 769px) and (max-width: 1024px) {
+  .employee-info-view {
+    .horizontal-layout {
+      gap: 30px;
+    }
+
+    .avatar-section {
+      width: 220px;
+      padding: 25px;
+
+      .avatar-container {
+        width: 160px;
+        height: 160px;
+      }
+    }
+
+    .form-section .form-container {
+      padding: 25px;
+    }
+  }
+}
+
+// 动画效果
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.avatar-section,
+.form-section {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.avatar-section {
+  animation-delay: 0.1s;
+}
+
+.form-section {
+  animation-delay: 0.2s;
+}

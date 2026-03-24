@@ -1,0 +1,173 @@
+/* 重置密码页面样式 */
+// 确保样式正确应用并与 @use 导入语法兼容
+.reset-password-container {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f7fa;
+  padding: 20px;
+}
+
+.reset-password-form {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  max-width: 500px;
+  animation: fadeIn 0.3s ease-out;
+
+  .form-title {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #303133;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-input) {
+    width: 100%;
+  }
+  
+  :deep(.el-input__wrapper) {
+    border-radius: 4px;
+
+    &:hover {
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+  }
+
+  :deep(.el-button) {
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 4px;
+
+    &.el-button--primary {
+      background-color: #1890ff;
+      border-color: #1890ff;
+
+      &:hover {
+        background-color: #40a9ff;
+        border-color: #40a9ff;
+      }
+
+      &.is-loading {
+        background-color: #1890ff;
+        border-color: #1890ff;
+      }
+    }
+
+    &.el-button--default {
+      color: #606266;
+      background-color: #ffffff;
+      border-color: #dcdfe6;
+
+      &:hover {
+        color: #1890ff;
+        border-color: #c6e2ff;
+        background-color: #ecf5ff;
+      }
+    }
+  }
+
+  :deep(.el-form-item__error) {
+    font-size: 12px;
+    color: #f56c6c;
+    padding-top: 4px;
+  }
+
+  :deep(.el-form-item__label) {
+    color: #606266;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    padding: 20px;
+    width: 100%;
+    max-width: none;
+
+    .form-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    :deep(.el-form-item) {
+      margin-bottom: 16px;
+    }
+
+    :deep(.el-button) {
+      width: 100%;
+      margin-bottom: 10px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  /* 密码输入框样式增强 */
+  :deep(.el-input--suffix .el-input__inner) {
+    padding-right: 40px;
+  }
+
+  :deep(.el-input__suffix-inner) {
+    .el-input__suffix-icon {
+      cursor: pointer;
+      color: #c0c4cc;
+
+      &:hover {
+        color: #909399;
+      }
+    }
+  }
+
+  /* 表单错误状态样式增强 */
+  :deep(.el-form-item.is-error .el-input__wrapper) {
+    box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2);
+    border-color: #f56c6c;
+  }
+
+  :deep(.el-form-item.is-error .el-input__wrapper:hover) {
+    box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.3);
+    border-color: #f78989;
+  }
+
+  /* 焦点状态样式增强 */
+  :deep(.el-input__inner:focus) {
+    border-color: #1890ff;
+  }
+
+  /* 按钮组样式 */
+  :deep(.el-form-item__content) {
+    display: flex;
+    gap: 12px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+}
+
+/* 动画定义 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

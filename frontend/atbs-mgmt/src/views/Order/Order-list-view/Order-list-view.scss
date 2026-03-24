@@ -1,0 +1,166 @@
+// 订单列表页面样式
+// 继承全局样式，确保页面一致性
+
+// 页面标题样式
+.page-title {
+  margin-bottom: 20px;
+  padding-left: 12px;
+  border-left: 4px solid #409eff;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+// 状态标签样式
+.status-tag {
+  &.el-tag--success {
+    background-color: #f0f9ff;
+    border-color: #b3d8ff;
+    color: #409eff;
+  }
+  
+  &.el-tag--warning {
+    background-color: #fdf6ec;
+    border-color: #f5dab1;
+    color: #e6a23c;
+  }
+  
+  &.el-tag--danger {
+    background-color: #fef0f0;
+    border-color: #fbc4c4;
+    color: #f56c6c;
+  }
+  
+  &.el-tag--info {
+    background-color: #f4f4f5;
+    border-color: #d3d4d6;
+    color: #909399;
+  }
+}
+
+// 价格显示样式
+.price-text {
+  color: #f56c6c;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+// 操作按钮样式
+.action-button {
+  &.el-button--text {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+  
+  &.is-disabled {
+    color: #c0c4cc;
+    cursor: not-allowed;
+  }
+}
+
+// 搜索表单样式
+.search-form {
+  .el-form-item {
+    margin-bottom: 16px;
+  }
+  
+  .el-input,
+  .el-select,
+  .el-date-editor {
+    width: 100%;
+  }
+}
+
+// 表格样式优化
+.data-table {
+  .el-table__header {
+    th {
+      background-color: #f5f7fa;
+      color: #606266;
+      font-weight: 600;
+    }
+  }
+  
+  .el-table__row {
+    &:hover {
+      background-color: #f5f7fa;
+    }
+  }
+}
+
+// 标签页样式
+.status-tabs {
+  .el-tabs__nav-wrap {
+    margin-bottom: 0;
+  }
+  
+  .el-tabs__item {
+    padding: 0 20px;
+    height: 40px;
+    line-height: 40px;
+    font-size: 14px;
+    
+    &.is-active {
+      color: #409eff;
+      font-weight: 600;
+    }
+  }
+}
+
+// 详情弹窗样式
+.detail-dialog {
+  .el-descriptions {
+    margin-bottom: 20px;
+  }
+  
+  .el-divider {
+    margin: 24px 0;
+  }
+  
+  h4 {
+    margin: 20px 0 10px 0;
+    color: #303133;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  .el-table {
+    margin-bottom: 20px;
+  }
+}
+
+// 响应式设计
+@media screen and (max-width: 768px) {
+  .search-form {
+    .el-col {
+      margin-bottom: 12px;
+    }
+  }
+  
+  .action-button {
+    &.el-button--text {
+      padding: 0 4px;
+      font-size: 12px;
+    }
+  }
+}
+
+// 自定义滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+  
+  &:hover {
+    background: #a8a8a8;
+  }
+}

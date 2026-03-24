@@ -1,0 +1,61 @@
+// DialogForm组件样式
+.el-dialog__body {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.el-form {
+  .el-form-item {
+    margin-bottom: 20px;
+  }
+  
+  .el-input.is-disabled,
+  .el-select.is-disabled {
+    background-color: #f5f7fa;
+    border-color: #dcdfe6;
+  }
+}
+
+// 表单错误提示样式优化
+.el-form-item__error {
+  padding-top: 4px;
+}
+
+// 禁用字段的提示信息
+.el-form-item__label {
+  &.is-disabled {
+    color: #909399;
+  }
+}
+
+// 响应式表单布局
+@media screen and (max-width: 768px) {
+  .el-dialog {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+  
+  .el-form {
+    .el-form-item {
+      margin-bottom: 15px;
+    }
+    
+    .el-form-item__label {
+      text-align: left;
+      padding-right: 10px;
+    }
+  }
+}
+
+// 加载状态的按钮样式
+.el-button.is-loading {
+  cursor: not-allowed;
+}
+
+// 对话框底部样式
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

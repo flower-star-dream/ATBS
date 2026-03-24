@@ -1,0 +1,67 @@
+// 班次列表页面样式
+
+.list-page {
+  .selected-count {
+    margin-left: 4px;
+    font-weight: bold;
+    color: var(--el-color-primary);
+  }
+}
+
+// 自定义表格列样式
+.el-table {
+  .el-tag {
+    font-weight: 500;
+  }
+  
+  // 余票状态标签样式
+  .el-tag--success {
+    background-color: #f0f9ff;
+    border-color: #b3d8ff;
+    color: #409eff;
+  }
+  
+  .el-tag--warning {
+    background-color: #fdf6ec;
+    border-color: #f5dab1;
+    color: #e6a23c;
+  }
+  
+  .el-tag--danger {
+    background-color: #fef0f0;
+    border-color: #fbc4c4;
+    color: #f56c6c;
+  }
+  
+  .el-tag--info {
+    background-color: #f4f4f5;
+    border-color: #d3d4d6;
+    color: #909399;
+  }
+}
+
+// 操作按钮区域样式
+.action-buttons {
+  .el-button {
+    margin-right: 8px;
+    
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// 响应式设计
+@media screen and (max-width: 768px) {
+  .list-page {
+    .search-container {
+      .el-form-item {
+        margin-bottom: 10px;
+      }
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+  }
+}

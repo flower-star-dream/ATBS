@@ -1,0 +1,329 @@
+.list-page {
+  // height: 100%;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+
+  // 页面标题样式
+  .page-title {
+    position: relative;
+    margin: 0 0 20px 0;
+    padding-left: 12px;
+    color: #303133;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.4;
+
+    .title-icon {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 20px;
+      background-color: #409eff;
+      border-radius: 2px;
+    }
+  }
+
+  // 标签页和操作按钮容器 - 修复与表格的连接
+  .tabs-actions-container {
+    display: flex;
+    justify-content: flex-end; // 默认靠右对齐
+    align-items: center;
+    margin-bottom: 0;
+    padding: 5px 16px;
+    background-color: #fff;
+    border-radius: 6px 6px 0 0; // 上圆角，下直角
+    border-bottom: 1px solid #ebeef5; // 添加底边边框
+
+    // 状态标签页样式
+    .status-tabs {
+      margin-right: auto; // 将标签页推到左侧
+      flex-shrink: 0; // 防止标签页被压缩
+      .el-tabs__nav {
+        border-bottom: none;
+        display: flex;
+        gap: 0;
+
+        // 确保标签紧贴容器顶部
+        &::before {
+          display: none;
+        }
+      }
+
+      .el-tabs__item {
+        padding: 10px 16px; // 增加垂直内边距
+        margin-right: 0;
+        transition: all 0.3s ease;
+        border-radius: 4px 4px 0 0; // 上圆角，下直角
+
+        &:hover {
+          color: #409eff;
+          background-color: #f5f7fa;
+        }
+
+        &.is-active {
+          color: #409eff;
+          font-weight: 500;
+          background-color: #fff;
+          border-bottom: 2px solid #409eff; // 活动标签下划线
+        }
+
+        .count-badge {
+          display: inline-block;
+          margin-left: 5px;
+          padding: 0 6px;
+          font-size: 12px;
+          line-height: 18px;
+          background-color: #409eff;
+          color: #fff;
+          border-radius: 9px;
+        }
+
+        &.is-active {
+          .count-badge {
+            background-color: #e6f7ff;
+            color: #409eff;
+          }
+        }
+      }
+    }
+
+    // 按钮操作区域样式
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+
+      .el-button {
+        transition: all 0.3s ease;
+
+        .selected-count {
+          font-size: 12px;
+          opacity: 0.8;
+        }
+
+        &.is-disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  // 查询条件区域样式
+  .search-container {
+    padding: 10px 16px;
+    background-color: #fff;
+    border-radius: 6px;
+
+    .el-form-item {
+      margin-right: 20px;
+      margin-bottom: 12px;
+    }
+
+    .el-input {
+      width: 200px;
+    }
+
+    .el-button {
+      margin-right: 10px;
+    }
+  }
+
+  // 表格容器样式 - 修复与标签页的连接
+  .table-container {
+    margin-top: -1px; // 与标签页容器重叠1px，去除双重边框
+    // border: 1px solid #ebeef5; // 表格容器边框
+    border-radius: 6px; 
+    overflow: hidden;
+
+    // 表格样式增强
+    .el-table {
+      margin: 0; // 重置margin
+      border-radius: 0;
+
+      .el-table__header-wrapper {
+        .el-table__header {
+          th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+            color: #303133;
+            border-bottom: 1px solid #ebeef5;
+          }
+        }
+      }
+
+      .el-table__body-wrapper {
+        .el-table__row {
+          transition: background-color 0.2s ease;
+
+          &:hover {
+            background-color: #f5f7fa !important;
+          }
+
+          &.el-table__row--striped {
+            background-color: #fafafa;
+
+            &:hover {
+              background-color: #f0f2f5 !important;
+            }
+          }
+        }
+      }
+
+      .el-button {
+        margin: 0 5px;
+      }
+
+      .el-button--primary {
+        color: #409eff;
+        &:hover {
+          color: #66b1ff;
+          background-color: rgba(64, 158, 255, 0.1);
+        }
+      }
+
+      .el-button--danger {
+        color: #f56c6c;
+        &:hover {
+          color: #f78989;
+          background-color: rgba(245, 108, 108, 0.1);
+        }
+      }
+    }
+  }
+
+  // 分页区域样式
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #fff;
+    margin-top: -1px;
+
+    .pagination-info {
+      font-size: 14px;
+      color: #606266;
+
+      .selected-count-text {
+        color: #409eff;
+        font-weight: 500;
+        font-size: 16px;
+      }
+    }
+
+    .el-pagination {
+      .el-pagination__total {
+        margin-right: 16px;
+        color: #606266;
+      }
+
+      .el-pagination__sizes {
+        margin-right: 16px;
+      }
+
+      .el-pagination__jump {
+        margin-left: 16px;
+      }
+
+      .el-pager li {
+        margin: 0 2px;
+        border-radius: 4px;
+        min-width: 32px;
+        height: 32px;
+        line-height: 32px;
+
+        &.active {
+          background-color: #409eff;
+          color: #fff;
+        }
+
+        &:hover:not(.disabled):not(.active) {
+          color: #409eff;
+          background-color: #ecf5ff;
+        }
+      }
+
+      .el-pagination__prev,
+      .el-pagination__next {
+        border-radius: 4px;
+        min-width: 32px;
+        height: 32px;
+        line-height: 32px;
+
+        &:hover:not(.disabled) {
+          color: #409eff;
+          background-color: #ecf5ff;
+        }
+      }
+    }
+  }
+
+  // 响应式设计优化
+  @media screen and (max-width: 768px) {
+    padding: 12px;
+
+    .search-container {
+      padding: 12px;
+
+      .el-form {
+        display: flex;
+        flex-direction: column;
+
+        .el-form-item {
+          width: 100%;
+          margin-right: 0;
+
+          .el-input {
+            width: 100%;
+          }
+        }
+      }
+    }
+
+    .tabs-actions-container {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+
+      .status-tabs {
+        width: 100%;
+
+        .el-tabs__nav {
+          width: 100%;
+          overflow-x: auto;
+          white-space: nowrap;
+          padding-bottom: 5px;
+        }
+      }
+
+      .action-buttons {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+    }
+
+    .pagination-container {
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+
+      .el-pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+
+        .el-pagination__total,
+        .el-pagination__sizes,
+        .el-pagination__jump {
+          margin: 8px 16px;
+        }
+      }
+    }
+  }
+}

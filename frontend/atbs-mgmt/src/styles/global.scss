@@ -1,0 +1,9 @@
+// 全局居中布局
+%center-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  background-color: #fff;
+  border-radius: 10px;
+}
