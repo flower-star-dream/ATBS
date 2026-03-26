@@ -39,6 +39,10 @@ public class EmployeeEO extends BizBaseEO<BaseStatus> implements StatusAble<Base
     @TableField("nickname")
     private String nickname ;
 
+    // 权限等级
+    @TableField("permission_level")
+    private String permissionLevel ;
+
     // 头像
     @TableField("avatar")
     private String avatar ;

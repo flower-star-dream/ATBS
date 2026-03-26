@@ -1,19 +1,5 @@
 import { StringDecoder } from "node:string_decoder"
 
-// 员工登录表单数据结构
-export interface LoginForm {
-  username: string
-  phone: string
-  password: string
-}
-
-// 登录响应数据结构
-export interface LoginResponse {
-  token: string
-  id: string
-  username: string
-}
-
 // 当前员工信息数据结构
 export interface EmployeeInfo {
   id: string
@@ -60,3 +46,20 @@ export interface ResetPasswordForm {
   confirmPwd: string
 }
 
+/**
+ * @deprecated 登录表单已迁移至 auth.d.ts，请从 auth 模块导入
+ */
+export interface LoginForm {
+  username: string
+  phone: string
+  password: string
+}
+
+/**
+ * @deprecated 登录响应已迁移至 auth.d.ts，请从 auth 模块导入
+ */
+export interface LoginResponse {
+  token: string
+  id: string
+  username: string
+}

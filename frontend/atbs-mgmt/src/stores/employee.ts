@@ -1,60 +1,49 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { LoginForm, EmployeeInfo } from '@/types/employee'
-import { login } from '@/api/employee'
+import type { EmployeeInfo } from '@/types/employee'
+import { getEmployeeInfoService } from '@/api/employee'
 
+/**
+ * 员工状态管理Store
+ * 管理员工信息相关业务
+ */
 export const useEmployeeStore = defineStore('employee', () => {
-  // 初始化时从localStorage读取数据
-  const token = ref(localStorage.getItem('token') || '')
-  const employeeInfo = ref<EmployeeInfo | null>()
+  // 员工信息
+  const employeeInfo = ref<EmployeeInfo | null>(null)
 
-  const loginAction = async (loginForm: LoginForm) => {
+  /**
+   * 获取员工信息
+   */
+  const fetchEmployeeInfo = async () => {
     try {
-      // 根据后端返回的LoginRES结构，直接从response中获取token
-      // 因为request.ts的响应拦截器已经返回了data部分
-      const response = await login(loginForm)
-      token.value = response.token
-      // 设置用户信息，提供完整的EmployeeInfo类型属性
-      employeeInfo.value = {
-        id: response.id,
-        username: response.username,
-        nickname: '', // 提供默认值
-        phone: '', // 提供默认值
-        avatar: '', // 提供默认值
-        affiliatedSite: '', // 提供默认值
-        permissionLevel: '' // 提供默认值
-      }
-      // 手动保存到localStorage
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('employeeInfo', JSON.stringify(employeeInfo.value))
+      const response = await getEmployeeInfoService()
+      employeeInfo.value = response
       return response
     } catch (error) {
       throw error
     }
   }
 
+  /**
+   * 设置员工信息
+   * @param newEmployeeInfo 员工信息
+   */
   const setEmployeeInfo = (newEmployeeInfo: EmployeeInfo) => {
     employeeInfo.value = newEmployeeInfo
-    // 手动保存到localStorage
-    if (newEmployeeInfo) {
-      localStorage.setItem('employeeInfo', JSON.stringify(newEmployeeInfo))
-    }
   }
 
-  const logoutAction = () => {
-    token.value = ''
+  /**
+   * 清除员工信息
+   */
+  const clearEmployeeInfo = () => {
     employeeInfo.value = null
-    // 手动从localStorage移除
-    localStorage.removeItem('token')
-    localStorage.removeItem('employeeInfo')
   }
 
   return {
-    token,
     employeeInfo,
+    fetchEmployeeInfo,
     setEmployeeInfo,
-    loginAction,
-    logoutAction
+    clearEmployeeInfo
   }
 })
 

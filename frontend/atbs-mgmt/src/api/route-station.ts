@@ -1,4 +1,4 @@
-import { trainSeatRequest } from '@/utils/request'
+import { orderRequest } from '@/utils/request'
 import type { ApiResponse, PageQuery, PageResult } from '@/types'
 import type { RouteStation, RouteStationList, RouteStationQuery, RouteStationForm, RouteStationSortUpdate } from '@/types/route-station'
 
@@ -8,7 +8,7 @@ import type { RouteStation, RouteStationList, RouteStationQuery, RouteStationFor
  * @returns 路线站点分页列表
  */
 export const getRouteStationList = (params: RouteStationQuery): Promise<PageResult<RouteStationList>> => {
-  return trainSeatRequest.get('/routeStations/getRouteStations', { params })
+  return orderRequest.get('/routeStations/getRouteStations', { params })
 }
 
 /**
@@ -17,7 +17,7 @@ export const getRouteStationList = (params: RouteStationQuery): Promise<PageResu
  * @returns 添加响应
  */
 export const addRouteStation = (data: RouteStationForm): Promise<void> => {
-  return trainSeatRequest.post('/routeStations/addRouteStations', data)
+  return orderRequest.post('/routeStations/addRouteStations', data)
 }
 
 /**
@@ -26,7 +26,7 @@ export const addRouteStation = (data: RouteStationForm): Promise<void> => {
  * @returns 更新响应
  */
 export const updateRouteStation = (data: RouteStationForm): Promise<void> => {
-  return trainSeatRequest.put('/routeStations/updateRouteStations', data)
+  return orderRequest.put('/routeStations/updateRouteStations', data)
 }
 
 /**
@@ -35,7 +35,7 @@ export const updateRouteStation = (data: RouteStationForm): Promise<void> => {
  * @returns 删除响应
  */
 export const deleteRouteStation = (ids: number[]): Promise<void> => {
-  return trainSeatRequest.delete('/routeStations/deleteRouteStations', { data: ids })
+  return orderRequest.delete('/routeStations/deleteRouteStations', { data: ids })
 }
 
 /**
@@ -44,5 +44,5 @@ export const deleteRouteStation = (ids: number[]): Promise<void> => {
  * @returns 更新响应
  */
 export const updateRouteStationSort = (data: RouteStationSortUpdate): Promise<ApiResponse> => {
-  return trainSeatRequest.put('/routeStations/sort', data)
+  return orderRequest.put('/routeStations/sort', data)
 }

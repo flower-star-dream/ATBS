@@ -12,6 +12,8 @@ import top.flowerstardream.atbs.auth.biz.service.IAuthRoleService;
 import top.flowerstardream.atbs.auth.bo.eo.RoleEO;
 import top.flowerstardream.atbs.auth.bo.eo.UserRoleEO;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,8 +56,43 @@ public class AuthRoleServiceImpl extends ServiceImpl<AuthRoleMapper, RoleEO> imp
         LambdaQueryWrapper<UserRoleEO> userRoleWrapper = new LambdaQueryWrapper<>();
         userRoleWrapper.eq(UserRoleEO::getUserId, userId);
         List<UserRoleEO> userRoles = authUserRoleMapper.selectList(userRoleWrapper);
+        if (userRoles == null || userRoles.isEmpty()) {
+            return Collections.emptyList();
+        }
         LambdaQueryWrapper<RoleEO> roleWrapper = new LambdaQueryWrapper<>();
         roleWrapper.in(RoleEO::getId, userRoles.stream().map(UserRoleEO::getRoleId));
         return authRoleMapper.selectList(roleWrapper);
+    }
+
+    /**
+     * 设置用户的角色
+     *
+     * @param userId
+     * @param roleCodes
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void setRolesByUserId(Long userId, List<String> roleCodes) {
+        if (roleCodes == null || roleCodes.isEmpty()) {
+            return;
+        }
+        LambdaQueryWrapper<UserRoleEO> userRoleWrapper = new LambdaQueryWrapper<>();
+        userRoleWrapper.eq(UserRoleEO::getUserId, userId);
+        List<UserRoleEO> userRoles = authUserRoleMapper.selectList(userRoleWrapper);
+        if (userRoles != null && !userRoles.isEmpty()) {
+            authUserRoleMapper.delete(userRoleWrapper);
+        }
+        List<UserRoleEO> newUserRoles = new ArrayList<>();
+        for (String roleCode : roleCodes) {
+            RoleEO role = self.getByRoleCode(roleCode);
+            if (role == null) {
+                continue;
+            }
+            UserRoleEO userRole = new UserRoleEO();
+            userRole.setUserId(userId);
+            userRole.setRoleId(role.getId());
+            newUserRoles.add(userRole);
+        }
+        authUserRoleMapper.insert(newUserRoles);
     }
 }

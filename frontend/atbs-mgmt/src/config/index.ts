@@ -10,28 +10,23 @@ import { getEnv } from './env'
 const env = getEnv()
 
 // 服务模块配置常量
+// 注意：路径格式已调整为 /api/{service}/v1/*/*
 const serviceConfig = {
-  // 开发环境服务配置 - 路径为空，由gateway处理路由
+  // 开发环境服务配置
   development: {
     user: '',
-    trainSeat: '',
-    ticket: '',
     order: '',
     system: ''
   },
-  // 测试环境服务配置 - 路径为空，由gateway处理路由
+  // 测试环境服务配置
   staging: {
     user: '',
-    trainSeat: '',
-    ticket: '',
     order: '',
     system: ''
   },
-  // 生产环境服务配置 - 路径为空，由gateway处理路由
+  // 生产环境服务配置
   production: {
     user: '',
-    trainSeat: '',
-    ticket: '',
     order: '',
     system: ''
   }
@@ -39,16 +34,16 @@ const serviceConfig = {
 
 /**
  * 主配置对象 - 包含所有环境的默认配置
- * 如需修改配置，只需修改此对象中的对应值
+ * 注意：apiPrefix已从 /api/v1/mgmt 调整为 /api/mgmt/v1
  */
 const defaultConfig: Config = {
   baseUrl: 'http://localhost:8080',
   ossUrl: 'http://localhost:9000/hcd',
-  apiPrefix: '/api/v1/mgmt',
+  apiPrefix: '/api/mgmt/v1',
   timeout: 10000,
   mock: false,
   debug: true,
-  title: '火车订票系统-后端管理',
+  title: '飞机订票系统-后端管理',
   services: serviceConfig.development
 }
 
@@ -59,20 +54,20 @@ const defaultConfig: Config = {
 const envConfigs: Record<string, Partial<Config>> = {
   // 开发环境特定配置
   development: {
-    title: '火车订票系统-后端管理 - 开发环境',
+    title: '飞机订票系统-后端管理 - 开发环境',
     services: serviceConfig.development
   },
-  
+
   // 测试环境特定配置
   staging: {
     baseUrl: 'https://hcd.flower-star-dream.top',
     ossUrl: 'https://hcd.flower-star-dream.top/hcd',
     mock: false,
     debug: true,
-    title: '火车订票系统-后端管理 - 测试环境',
+    title: '飞机订票系统-后端管理 - 测试环境',
     services: serviceConfig.staging
   },
-  
+
   // 生产环境特定配置
   production: {
     baseUrl: 'https://hcd.flower-star-dream.top',
@@ -80,6 +75,7 @@ const envConfigs: Record<string, Partial<Config>> = {
     timeout: 30000,
     mock: false,
     debug: false,
+    title: '飞机订票系统-后端管理',
     services: serviceConfig.production
   }
 }

@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: prediction-service
+  profiles:
+    active: dev
+  config:
+    import:
+      - nacos:atbs-common
+#      - nacos:${spring.application.name}
+  cloud:
+    nacos:
+      server-addr: 103.115.43.55:8848
+      username: nacos
+      password: nacos_040329
+      config:
+        namespace: 80338282-5c6a-4b82-89d4-5c90adfd6997
+        group: DEFAULT_GROUP
+        file-extension: yaml
+      discovery:
+        namespace: 80338282-5c6a-4b82-89d4-5c90adfd6997
+        group: DEFAULT_GROUP
+        enabled: true
+
+server:
+  host: 127.0.0.1
+  port: 8085
+
+prediction:
+  default-days: 20
+  max-days: 365
+  confidence-level: 0.95
+
+cors:
+  origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+
+logging:
+  level:
+    root: DEBUG
+    top.flowerstardream.base: DEBUG
+    top.flowerstardream.atbs: DEBUG
+    org.springframework.web: DEBUG
+    com.alibaba.cloud.nacos: INFO
+  file:
+    enabled: true
+    path: ../logs/${spring.application.name}
+    name: ${spring.application.name}.log
+    history-pattern: ${spring.application.name}-%d{yyyy-MM-dd}.log
+    max-history: 30

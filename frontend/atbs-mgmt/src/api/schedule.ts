@@ -1,4 +1,4 @@
-import { trainSeatRequest } from '@/utils/request'
+import { orderRequest } from '@/utils/request'
 import type { Schedule, ScheduleList, ScheduleQuery, RealTimeSchedulePageQueryREQ, RealTimeScheduleRES, ApiResponse, PageResult } from '@/types'
 
 /**
@@ -7,7 +7,7 @@ import type { Schedule, ScheduleList, ScheduleQuery, RealTimeSchedulePageQueryRE
  * @returns 班次分页列表
  */
 export const getScheduleList = (params: ScheduleQuery): Promise<PageResult<ScheduleList>> => {
-  return trainSeatRequest.get('/schedule/getSchedules', { params })
+  return orderRequest.get('/schedule/getSchedules', { params })
 }
 /**
  * 获取实时班次列表
@@ -15,7 +15,7 @@ export const getScheduleList = (params: ScheduleQuery): Promise<PageResult<Sched
  * @returns 班次分页列表
  */
 export const getRealTimeSchedule = (params: RealTimeSchedulePageQueryREQ): Promise<PageResult<RealTimeScheduleRES>> => {
-  return trainSeatRequest.get('/schedule/realTimeSchedule', { params })
+  return orderRequest.get('/schedule/realTimeSchedule', { params })
 }
 
 /**
@@ -24,7 +24,7 @@ export const getRealTimeSchedule = (params: RealTimeSchedulePageQueryREQ): Promi
  * @returns 添加响应
  */
 export const addSchedule = (data: Partial<Schedule>): Promise<void> => {
-  return trainSeatRequest.post('/schedule/addSchedule', data)
+  return orderRequest.post('/schedule/addSchedule', data)
 }
 
 /**
@@ -33,7 +33,7 @@ export const addSchedule = (data: Partial<Schedule>): Promise<void> => {
  * @returns 更新响应
  */
 export const updateSchedule = (data: Partial<Schedule>): Promise<void> => {
-  return trainSeatRequest.put('/schedule/updateSchedule', data)
+  return orderRequest.put('/schedule/updateSchedule', data)
 }
 
 /**
@@ -42,5 +42,5 @@ export const updateSchedule = (data: Partial<Schedule>): Promise<void> => {
  * @returns 删除响应
  */
 export const deleteSchedule = (ids: number[]): Promise<void> => {
-  return trainSeatRequest.delete('/schedule/deleteSchedule', { data: ids })
+  return orderRequest.delete('/schedule/deleteSchedule', { data: ids })
 }

@@ -32,6 +32,9 @@ public class EmployeeInfoREQ implements Serializable {
     @Schema(description = "手机号")
     private String phone;
 
+    @Schema(description = "权限等级")
+    private String permissionLevel;
+
     @Schema(description = "头像")
     private String avatar;
 
