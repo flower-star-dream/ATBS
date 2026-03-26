@@ -24,9 +24,11 @@ import top.flowerstardream.atbs.auth.ao.res.WxLoginTokenRES;
 import top.flowerstardream.atbs.auth.biz.client.UserClient;
 import top.flowerstardream.atbs.auth.biz.mapper.AuthUserMapper;
 import top.flowerstardream.atbs.auth.biz.mapper.AuthUserSocialMapper;
+import top.flowerstardream.atbs.auth.biz.service.IAuthRoleService;
 import top.flowerstardream.atbs.auth.biz.service.IAuthUserService;
 import top.flowerstardream.atbs.auth.biz.service.IUserSocialService;
 import top.flowerstardream.atbs.auth.bo.eo.AuthUserEO;
+import top.flowerstardream.atbs.auth.bo.eo.RoleEO;
 import top.flowerstardream.atbs.auth.bo.eo.UserSocialEO;
 import top.flowerstardream.base.properties.JwtProperties;
 import top.flowerstardream.base.properties.WeChatProperties;
@@ -42,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static top.flowerstardream.atbs.auth.common.AuthConstant.DEFAULT_USER_ROLE;
 import static top.flowerstardream.atbs.auth.common.AuthExceptionEnum.*;
 import static top.flowerstardream.atbs.auth.common.WxConstant.WX_PLACEHOLDER_PASSWORD;
 import static top.flowerstardream.atbs.tools.constants.CommonConstant.WX_USER_PREFIX;
@@ -76,6 +79,9 @@ public class AuthUserServiceImpl extends BaseServiceImpl<AuthUserMapper, AuthUse
 
     @Resource
     private IUserSocialService userSocialService;
+
+    @Resource
+    private IAuthRoleService authRoleService;
 
     @Resource
     @Lazy
@@ -121,6 +127,7 @@ public class AuthUserServiceImpl extends BaseServiceImpl<AuthUserMapper, AuthUse
                         .status(BaseStatus.ENABLE)
                         .build();
                 self.save(user);
+                authRoleService.setRolesByUserId(user.getId(), Collections.singletonList(DEFAULT_USER_ROLE));
             }
             social = UserSocialEO.builder()
                     .userId(user.getId())
@@ -196,6 +203,7 @@ public class AuthUserServiceImpl extends BaseServiceImpl<AuthUserMapper, AuthUse
             authUserEO.setId(null);
         }
         authUserEO.setPassword(passwordEncoder.encode(authUserEO.getPassword()));
+        authRoleService.setRolesByUserId(authUserEO.getId(), Collections.singletonList(DEFAULT_USER_ROLE));
         if (!self.save(authUserEO)) {
             log.error("新增用户账号失败：{}", authUserEO);
             throw INSERTION_FAILED.toException();
@@ -278,6 +286,11 @@ public class AuthUserServiceImpl extends BaseServiceImpl<AuthUserMapper, AuthUse
                 log.error("同步新增用户账号失败：{}", authUserEO);
                 throw INSERTION_FAILED.toException();
             }
+            if (StrUtil.isNotBlank(userSynchronizeREQ.getPermissionLevel())) {
+                authRoleService.setRolesByUserId(authUserEO.getId(), Collections.singletonList(userSynchronizeREQ.getPermissionLevel()));
+            } else {
+                authRoleService.setRolesByUserId(authUserEO.getId(), Collections.singletonList(DEFAULT_USER_ROLE));
+            }
             return authUserEO.getId();
         }
         if (StrUtil.isNotBlank(userSynchronizeREQ.getUsername())){
@@ -291,6 +304,9 @@ public class AuthUserServiceImpl extends BaseServiceImpl<AuthUserMapper, AuthUse
         }
         if (StrUtil.isNotBlank(userSynchronizeREQ.getPassword()) && userEO.getPassword().equals(WX_PLACEHOLDER_PASSWORD)){
             userEO.setPassword(passwordEncoder.encode(userSynchronizeREQ.getPassword()));
+        }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getPermissionLevel())) {
+            authRoleService.setRolesByUserId(userEO.getId(), Collections.singletonList(userSynchronizeREQ.getPermissionLevel()));
         }
         if (!self.updateById(userEO)) {
             log.error("同步用户账号失败：{}", userEO);
@@ -384,12 +400,15 @@ public class AuthUserServiceImpl extends BaseServiceImpl<AuthUserMapper, AuthUse
     }
 
     private void toSynchronization(AuthUserEO authUserEO){
+        List<RoleEO> rolesByUserId = authRoleService.getRolesByUserId(authUserEO.getId());
+        String permissionLevel = rolesByUserId != null && !rolesByUserId.isEmpty() ? rolesByUserId.get(0).getRoleCode() : DEFAULT_USER_ROLE;
         UserSynchronizeREQ userSynchronizeREQ = UserSynchronizeREQ.builder()
                 .id(authUserEO.getId())
                 .username(authUserEO.getUsername())
                 .phone(authUserEO.getPhone())
                 .email(authUserEO.getEmail())
                 .status(authUserEO.getStatus() == BaseStatus.DISABLE ? BaseStatus.DISABLE : null)
+                .permissionLevel(permissionLevel)
                 .build();
         userClient.synchronizationUserInfo(userSynchronizeREQ);
     }

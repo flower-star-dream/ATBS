@@ -34,6 +34,9 @@ public class EmployeeREQ implements Serializable {
     @Schema(description = "密码")
     private String password ;
 
+    @Schema(description = "权限等级")
+    private String permissionLevel;
+
     @Schema(description = "所属站点")
     private String affiliatedSite ;
 

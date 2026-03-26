@@ -1,4 +1,4 @@
-import { trainSeatRequest } from '@/utils/request'
+import { orderRequest } from '@/utils/request'
 import type { ApiResponse, PageQuery, PageResult } from '@/types'
 import type { Route, RouteQuery, RouteForm } from '@/types/route'
 
@@ -8,7 +8,7 @@ import type { Route, RouteQuery, RouteForm } from '@/types/route'
  * @returns 添加响应
  */
 export const addRoute = (data: RouteForm): Promise<void> => {
-  return trainSeatRequest.post('/route/addRoute', data)
+  return orderRequest.post('/route/addRoute', data)
 }
 
 /**
@@ -17,7 +17,7 @@ export const addRoute = (data: RouteForm): Promise<void> => {
  * @returns 删除响应
  */
 export const deleteRoute = (ids: number[]): Promise<void> => {
-  return trainSeatRequest.delete('/route/deleteRoute', { data: ids })
+  return orderRequest.delete('/route/deleteRoute', { data: ids })
 }
 
 /**
@@ -26,7 +26,7 @@ export const deleteRoute = (ids: number[]): Promise<void> => {
  * @returns 更新响应
  */
 export const updateRoute = (data: RouteForm): Promise<void> => {
-  return trainSeatRequest.put('/route/updateRoute', data)
+  return orderRequest.put('/route/updateRoute', data)
 }
 
 /**
@@ -35,5 +35,5 @@ export const updateRoute = (data: RouteForm): Promise<void> => {
  * @returns 路线分页列表
  */
 export const getRouteList = (params: RouteQuery): Promise<PageResult<Route>> => {
-  return trainSeatRequest.get('/route/getRoute', { params })
+  return orderRequest.get('/route/getRoute', { params })
 }

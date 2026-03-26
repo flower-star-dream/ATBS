@@ -75,7 +75,7 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
     public void updateInfo(EmployeeInfoREQ employeeInfoREQ) {
         EmployeeEO employee = new EmployeeEO();
         BeanUtils.copyProperties(employeeInfoREQ, employee);
-        boolean update = updateById(employee);
+        boolean update = self.updateById(employee);
         if (!update) {
             log.error("更新当前登录用户信息失败：{}", employee);
             throw MODIFICATION_FAILED.toException();
@@ -219,6 +219,9 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
         if (userSynchronizeREQ.getStatus() != null) {
             employee.setStatus(userSynchronizeREQ.getStatus());
         }
+        if (StrUtil.isNotBlank(userSynchronizeREQ.getPermissionLevel())) {
+            employee.setPermissionLevel(userSynchronizeREQ.getPermissionLevel());
+        }
         if (!self.updateById(employee)) {
             log.error("同步员工账号失败：{}", employee);
             throw MODIFICATION_FAILED.toException();
@@ -276,6 +279,7 @@ public class EmployeeServiceImpl extends BaseServiceImpl<EmployeeMapper, Employe
         userSynchronizeREQ.setUsername(employeeEO.getUsername());
         userSynchronizeREQ.setPassword(password);
         userSynchronizeREQ.setPhone(employeeEO.getPhone());
+        userSynchronizeREQ.setPermissionLevel(employeeEO.getPermissionLevel());
         return authClient.synchronizationUserInfo(userSynchronizeREQ).getData();
     }
 }

@@ -19,4 +19,9 @@ public interface IAuthRoleService extends IService<RoleEO> {
      * 查询用户的所有角色
      */
     List<RoleEO> getRolesByUserId(Long userId);
+
+    /**
+     * 为用户设置角色
+     */
+    void setRolesByUserId(Long userId, List<String> roleCodes);
 }

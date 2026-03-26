@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `atbs_employee` (
   `avatar` varchar(200) DEFAULT NULL COMMENT '头像 url',
   `status` int NOT NULL DEFAULT '1' COMMENT '状态',
   `phone` varchar(11) NOT NULL COMMENT '手机号',
+  `0` varchar(10) NOT NULL COMMENT '权限等级',
   `affiliated_site` varchar(100) DEFAULT NULL COMMENT '所属站点',
   `create_time` datetime NOT NULL COMMENT '创建时间',
   `update_time` datetime NOT NULL COMMENT '更新时间',

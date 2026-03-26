@@ -29,4 +29,7 @@ public class EmployeePageQueryREQ extends BasePageQueryREQ implements Serializab
     @Schema(description = "手机号")
     private String phone;
 
+    @Schema(description = "权限等级")
+    private String permissionLevel;
+
 }

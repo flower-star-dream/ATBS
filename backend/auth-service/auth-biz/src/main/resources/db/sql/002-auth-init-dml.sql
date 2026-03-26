@@ -21,8 +21,8 @@ INSERT INTO auth_role_permissions (id, role_id, permission_id) VALUES
 (1, 1, 1), (2, 1, 2), (3, 1, 3), (4, 1, 4), (5, 1, 5), (6, 1, 6), (7, 1, 7), (8, 1, 8);
 
 -- 初始化超管用户（密码：admin123）
-INSERT INTO auth_users (id, username, password, phone, status, create_time, update_time, create_person_id, update_person_id) VALUES
-(1, 'admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '13800138000', 1, NOW(), NOW(), 0, 0);
+INSERT INTO auth_users (id, username, password, phone, email, status, create_time, update_time, create_person_id, update_person_id) VALUES
+(1, 'system', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '13728016558', '1378281299@qq.com', 1, NOW(), NOW(), 1, 1);
 
 INSERT INTO auth_user_roles (id, user_id, role_id, create_time, update_time, create_person_id, update_person_id) VALUES
 (1, 1, 1, NOW(), NOW(), 0, 0);

@@ -17,7 +17,9 @@ class PredictionRequest(BaseModel):
 
 class PredictionItem(BaseModel):
     """预测结果项"""
-    date: date = Field(description="日期")
+    model_config = {"populate_by_name": True}
+
+    prediction_date: date = Field(description="日期", alias="date")
     predicted_passengers: int = Field(description="预测客流量")
     lower_bound: int = Field(description="置信区间下限")
     upper_bound: int = Field(description="置信区间上限")
@@ -44,12 +46,12 @@ class PredictionResponse(BaseModel):
 
 
 class TrainingRequest(BaseModel):
-    """训练请求模型"""
-    p: int = Field(default=5, ge=0, le=10, description="自回归阶数 p")
-    d: int = Field(default=1, ge=0, le=3, description="差分阶数 d")
-    q: int = Field(default=0, ge=0, le=10, description="移动平均阶数 q")
-    auto_optimize: bool = Field(default=False, description="是否自动寻找最优参数")
-    test_size: int = Field(default=30, ge=7, le=90, description="验证集大小")
+    """训练请求模型 - 默认自动寻找最优参数，调用方无需关心具体实现"""
+    p: int = Field(default=5, ge=0, le=10, description="自回归阶数 p（仅在 auto_optimize=false 时使用）")
+    d: int = Field(default=1, ge=0, le=3, description="差分阶数 d（仅在 auto_optimize=false 时使用）")
+    q: int = Field(default=0, ge=0, le=10, description="移动平均阶数 q（仅在 auto_optimize=false 时使用）")
+    auto_optimize: bool = Field(default=True, description="是否自动寻找最优参数（默认启用）")
+    test_size: int = Field(default=30, ge=7, le=90, description="验证集大小（默认30天，符合一般标准）")
 
 
 class ValidationMetrics(BaseModel):

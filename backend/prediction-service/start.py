@@ -6,13 +6,13 @@ import uvicorn
 from app.core.config import settings
 
 if __name__ == "__main__":
-    print(f"启动 {settings.APP_NAME}...")
-    print(f"访问文档: http://{settings.HOST}:{settings.PORT}/docs")
+    print(f"启动 {settings.app_name}...")
+    print(f"访问文档: http://{settings.host}:{settings.port}/docs")
 
     uvicorn.run(
         "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
+        host=settings.host,
+        port=settings.port,
         reload=True,
         log_level="info"
     )

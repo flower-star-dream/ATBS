@@ -25,7 +25,7 @@ import static top.flowerstardream.base.utils.GetInfoUtil.*;
  * @Description: 后管端机票控制器
  */
 @RestController("mgmtTicketController")
-@RequestMapping("/api/mgmt/v1/ticket/ticket")
+@RequestMapping("/api/mgmt/v1/order/ticket")
 @Tag(name = "后管端-机票管理")
 @Slf4j
 public class TicketController {

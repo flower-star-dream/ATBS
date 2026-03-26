@@ -1,8 +1,6 @@
 // 服务模块配置类型
 export interface ServiceConfig {
   user: string
-  trainSeat: string
-  ticket: string
   order: string
   system: string
 }

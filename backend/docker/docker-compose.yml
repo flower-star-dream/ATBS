@@ -6,13 +6,13 @@ services:
   # 网关服务
   atbs-gateway:
     build:
-      context: ../atbs-gateway
+      context: ./atbs-gateway
       dockerfile: docker/Dockerfile
     container_name: atbs-gateway
     image: atbs/atbs-gateway:latest
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=dev
       - JAVA_OPTS=-Xms256m -Xmx512m
     ports:
       - "8080:8080"
@@ -23,13 +23,13 @@ services:
   # 认证服务
   auth-service:
     build:
-      context: ../auth-service
+      context: ./auth-service
       dockerfile: docker/Dockerfile
     container_name: auth-service
     image: atbs/auth-service:latest
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=dev
       - JAVA_OPTS=-Xms256m -Xmx512m
     ports:
       - "8081:8081"
@@ -40,13 +40,13 @@ services:
   # 用户服务
   user-service:
     build:
-      context: ../user-service
+      context: ./user-service
       dockerfile: docker/Dockerfile
     container_name: user-service
     image: atbs/user-service:latest
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=dev
       - JAVA_OPTS=-Xms256m -Xmx512m
     ports:
       - "8082:8082"
@@ -57,13 +57,13 @@ services:
   # 订单服务
   order-service:
     build:
-      context: ../order-service
+      context: ./order-service
       dockerfile: docker/Dockerfile
     container_name: order-service
     image: atbs/order-service:latest
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=dev
       - JAVA_OPTS=-Xms256m -Xmx512m
     ports:
       - "8083:8083"
@@ -74,16 +74,30 @@ services:
   # 航班服务
   airplane-service:
     build:
-      context: ../airplane-service
+      context: ./airplane-service
       dockerfile: docker/Dockerfile
     container_name: airplane-service
     image: atbs/airplane-service:latest
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=dev
       - JAVA_OPTS=-Xms256m -Xmx512m
     ports:
       - "8084:8084"
     networks:
       - backend-network
-    
+
+
+  prediction-service:
+    build:
+      context: ./prediction-service
+      dockerfile: Dockerfile
+    container_name: prediction-service
+    image: atbs/prediction-service:latest
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    ports:
+      - "8085:8085"
+    networks:
+      - backend-network

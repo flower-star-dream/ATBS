@@ -23,7 +23,7 @@ from utils.data_processor import DataProcessor
 from app.core.config import settings
 from app.schemas.prediction import (
     PredictionRequest, PredictionResponse, PredictionItem, ModelInfo,
-    TrainingRequest, TrainingResponse, ValidationMetrics, ModelInfoResponse
+    TrainingResponse, ValidationMetrics, ModelInfoResponse
 )
 
 logger = logging.getLogger(__name__)
@@ -38,10 +38,10 @@ class PredictionService:
 
     def _load_model(self):
         """加载已训练的模型"""
-        model_file = settings.MODEL_PATH / "arima_model.pkl"
+        model_file = settings.model_path / "arima_model.pkl"
         if model_file.exists():
             try:
-                self.predictor = ARIMAPredictor(str(settings.MODEL_PATH))
+                self.predictor = ARIMAPredictor(str(settings.model_path))
                 logger.info("模型加载成功")
             except Exception as e:
                 logger.warning(f"模型加载失败: {e}")
@@ -71,8 +71,10 @@ class PredictionService:
             except:
                 pass
 
+        # 使用模型参数或默认值
+        default_order = [5, 1, 0]
         return ModelInfo(
-            order=params.get('order', [settings.DEFAULT_P, settings.DEFAULT_D, settings.DEFAULT_Q]),
+            order=params.get('order', default_order),
             aic=params.get('aic'),
             bic=params.get('bic'),
             training_time=training_time
@@ -91,8 +93,7 @@ class PredictionService:
         # 如果没有模型且请求了自动训练，则先训练
         if self.predictor is None and request.auto_train:
             logger.info("模型不存在，执行自动训练...")
-            train_request = TrainingRequest()
-            self.train(train_request)
+            self.train()
 
         if self.predictor is None:
             return PredictionResponse(
@@ -114,7 +115,7 @@ class PredictionService:
             for _, row in result_df.iterrows():
                 weekday = row['Weekday']
                 predictions.append(PredictionItem(
-                    date=row['Date'].date() if isinstance(row['Date'], pd.Timestamp) else row['Date'],
+                    prediction_date=row['Date'].date() if isinstance(row['Date'], pd.Timestamp) else row['Date'],
                     predicted_passengers=int(row['Predicted_Passengers']),
                     lower_bound=int(row['Lower_Bound']),
                     upper_bound=int(row['Upper_Bound']),
@@ -142,32 +143,26 @@ class PredictionService:
                 model_info=self._get_model_info()
             )
 
-    def train(self, request: TrainingRequest) -> TrainingResponse:
+    def train(self) -> TrainingResponse:
         """
         训练模型
 
-        Args:
-            request: 训练请求
+        模型自动寻找最优参数，调用方无需关心具体实现
 
         Returns:
             训练响应
         """
         try:
             # 检查数据文件是否存在
-            data_file = settings.DATA_FILE
+            data_file = settings.data_file
             if not data_file.exists():
-                # 尝试使用示例数据
-                alt_path = Path(__file__).resolve().parent.parent.parent.parent / "src" / "main" / "resources" / "data" / "airline-passengers.csv"
-                if alt_path.exists():
-                    data_file = alt_path
-                else:
-                    return TrainingResponse(
-                        status="error",
-                        message=f"数据文件不存在: {data_file}",
-                        order=[request.p, request.d, request.q],
-                        training_time=self._get_beijing_time(),
-                        data_length=0
-                    )
+                return TrainingResponse(
+                    status="error",
+                    message=f"数据文件不存在: {data_file}",
+                    order=[5, 1, 0],
+                    training_time=self._get_beijing_time(),
+                    data_length=0
+                )
 
             # 加载和处理数据
             processor = DataProcessor()
@@ -175,23 +170,20 @@ class PredictionService:
             daily_data = processor.monthly_to_daily(interpolation_method='cubic')
             passenger_series = daily_data['Passengers']
 
-            # 创建训练器
-            trainer = ARIMATrainer(p=request.p, d=request.d, q=request.q)
+            # 创建训练器并自动寻找最优参数
+            logger.info("自动寻找最优 ARIMA 参数...")
+            trainer = ARIMATrainer(p=5, d=1, q=0)
+            trainer.find_best_params(passenger_series)
 
-            # 如果需要，自动寻找最优参数
-            if request.auto_optimize:
-                logger.info("自动寻找最优 ARIMA 参数...")
-                trainer.find_best_params(passenger_series)
-
-            # 训练模型
+            # 训练模型（使用默认验证集大小30天）
             history = trainer.train(
                 passenger_series,
                 validate=True,
-                test_size=request.test_size
+                test_size=30
             )
 
             # 保存模型
-            trainer.save_model(str(settings.MODEL_PATH))
+            trainer.save_model(str(settings.model_path))
 
             # 重新加载模型
             self._load_model()
@@ -223,7 +215,7 @@ class PredictionService:
             return TrainingResponse(
                 status="error",
                 message=f"训练失败: {str(e)}",
-                order=[request.p, request.d, request.q],
+                order=[5, 1, 0],
                 training_time=self._get_beijing_time(),
                 data_length=0
             )
