@@ -1,54 +1,74 @@
 # 阶段一：构建阶段
 FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 
-# 设置工作目录
 WORKDIR /build
 
-# 首先复制父 pom.xml 以利用依赖缓存
+# 复制父 pom
 COPY pom.xml .
 
-# 复制所有子模块的 pom.xml（利用 Docker 缓存层，依赖未变更时不重新下载）
-COPY user-ao/pom.xml user-ao/
-COPY user-bo/pom.xml user-bo/
-COPY user-api/pom.xml user-api/
-COPY user-biz/pom.xml user-biz/
-COPY user-common/pom.xml user-common/
-COPY user-boot/pom.xml user-boot/
+# 复制所有模块的 pom.xml（保持目录结构，Maven 需要检查 modules）
+COPY atbs-gateway/pom.xml atbs-gateway/
+COPY atbs-tools/pom.xml atbs-tools/
+COPY auth-service/pom.xml auth-service/
+COPY auth-service/auth-api/pom.xml auth-service/auth-api/
+COPY auth-service/auth-ao/pom.xml auth-service/auth-ao/
+COPY auth-service/auth-biz/pom.xml auth-service/auth-biz/
+COPY auth-service/auth-bo/pom.xml auth-service/auth-bo/
+COPY auth-service/auth-boot/pom.xml auth-service/auth-boot/
+COPY auth-service/auth-common/pom.xml auth-service/auth-common/
+COPY user-service/pom.xml user-service/
+COPY user-service/user-api/pom.xml user-service/user-api/
+COPY user-service/user-ao/pom.xml user-service/user-ao/
+COPY user-service/user-biz/pom.xml user-service/user-biz/
+COPY user-service/user-bo/pom.xml user-service/user-bo/
+COPY user-service/user-boot/pom.xml user-service/user-boot/
+COPY user-service/user-common/pom.xml user-service/user-common/
+COPY order-service/pom.xml order-service/
+COPY order-service/order-api/pom.xml order-service/order-api/
+COPY order-service/order-ao/pom.xml order-service/order-ao/
+COPY order-service/order-biz/pom.xml order-service/order-biz/
+COPY order-service/order-bo/pom.xml order-service/order-bo/
+COPY order-service/order-boot/pom.xml order-service/order-boot/
+COPY order-service/order-common/pom.xml order-service/order-common/
+COPY airplane-service/pom.xml airplane-service/
+COPY airplane-service/airplane-api/pom.xml airplane-service/airplane-api/
+COPY airplane-service/airplane-ao/pom.xml airplane-service/airplane-ao/
+COPY airplane-service/airplane-biz/pom.xml airplane-service/airplane-biz/
+COPY airplane-service/airplane-bo/pom.xml airplane-service/airplane-bo/
+COPY airplane-service/airplane-boot/pom.xml airplane-service/airplane-boot/
+COPY airplane-service/airplane-common/pom.xml airplane-service/airplane-common/
 
-# 下载依赖（离线模式准备，加快后续构建）
-RUN mvn dependency:go-offline -B
+# 本地构建命令（需要 Docker BuildKit）：
+#   Windows: set DOCKER_BUILDKIT=1 & docker build --secret id=settings,src=%USERPROFILE%\.m2\settings.xml -f user-service/docker/Dockerfile -t user-service .
+#   Linux:   DOCKER_BUILDKIT=1 docker build --secret id=settings,src=$HOME/.m2/settings.xml -f user-service/docker/Dockerfile -t user-service .
+# 云效流水线：不需要加 --secret
 
-# 复制所有源代码
-COPY user-ao/src user-ao/src/
-COPY user-bo/src user-bo/src/
-COPY user-api/src user-api/src/
-COPY user-biz/src user-biz/src/
-COPY user-common/src user-common/src/
-COPY user-boot/src user-boot/src/
+# 安装父POM（不构建子模块）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn install -N -B -Drevision=release-1.0.0
 
-# 执行构建，跳过测试，打包 boot 模块
-RUN mvn clean package -DskipTests -pl user-boot -am -B
+# 下载依赖（只处理 user-boot，依赖从私库拉取）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn dependency:go-offline -B -pl user-service/user-boot -Drevision=release-1.0.0
 
-# 阶段二：运行阶段（精简镜像）
+# 复制 user-service 源码（只构建这个模块）
+COPY user-service/user-api/src/ user-service/user-api/src/
+COPY user-service/user-ao/src/ user-service/user-ao/src/
+COPY user-service/user-biz/src/ user-service/user-biz/src/
+COPY user-service/user-bo/src/ user-service/user-bo/src/
+COPY user-service/user-boot/src/ user-service/user-boot/src/
+COPY user-service/user-common/src/ user-service/user-common/src/
+
+# 构建（只构建 user-boot，依赖从私库拉取）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn clean package -DskipTests -pl user-service/user-boot -B -Drevision=release-1.0.0
+
+# 阶段二：运行阶段
 FROM eclipse-temurin:17-jre-alpine
-
-# 设置时区为东八区（可选）
 ENV TZ=Asia/Shanghai
-
-# 创建非 root 用户运行应用（安全最佳实践）
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# 设置工作目录
 WORKDIR /app
-
-# 从构建阶段复制生成的 jar 包（假设 artifactId 与模块名一致）
-COPY --from=builder /build/user-boot/target/*.jar app.jar
-
-# 切换用户
+COPY --from=builder /build/user-service/user-boot/target/*.jar app.jar
 USER appuser
-
-# 暴露端口（根据你的应用调整）
 EXPOSE 8082
-
-# 启动命令
 ENTRYPOINT ["java", "-jar", "app.jar"]

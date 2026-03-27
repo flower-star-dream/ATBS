@@ -59,7 +59,7 @@ COPY atbs-gateway/src/ atbs-gateway/src/
 
 # 构建（只构建 atbs-gateway，依赖从私库拉取）
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn clean package -DskipTests -pl atbs-gateway -B -Drevision=release-1.0.0
+    mvn clean package spring-boot:repackage -DskipTests -pl atbs-gateway -B -Drevision=release-1.0.0
 
 # 阶段二：运行阶段
 FROM eclipse-temurin:17-jre-alpine

@@ -10,19 +10,19 @@
         </encoder>
     </appender>
 
-    <!-- 3. 文件（按天滚动） -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!-- 当前正在写的文件 -->
-        <file>backend/logs/${APP_NAME}/${APP_NAME}.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 历史文件 -->
-            <fileNamePattern>logs/${APP_NAME}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+<!--    &lt;!&ndash; 3. 文件（按天滚动） &ndash;&gt;-->
+<!--    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+<!--        &lt;!&ndash; 当前正在写的文件 &ndash;&gt;-->
+<!--        <file>logs/${APP_NAME}/${APP_NAME}.log</file>-->
+<!--        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+<!--            &lt;!&ndash; 历史文件 &ndash;&gt;-->
+<!--            <fileNamePattern>logs/${APP_NAME}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>-->
+<!--            <maxHistory>30</maxHistory>-->
+<!--        </rollingPolicy>-->
+<!--        <encoder>-->
+<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
 
     <!-- 4. 级别配置（与 yml 完全一致） -->
     <logger name="top.flowerstardream.base" level="DEBUG"/>

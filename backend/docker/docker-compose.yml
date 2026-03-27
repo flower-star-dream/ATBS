@@ -2,12 +2,25 @@ networks:
   backend-network:
     driver: bridge
 
+# 定义 secrets，用于构建时传递 settings.xml
+# 使用环境变量 MAVEN_SETTINGS_PATH 指定 settings.xml 路径
+# Windows: set MAVEN_SETTINGS_PATH=C:\Users\JAM\.m2\settings.xml
+# Linux:   export MAVEN_SETTINGS_PATH=$HOME/.m2/settings.xml
+secrets:
+  settings:
+    file: ${MAVEN_SETTINGS_PATH:-~/.m2/settings.xml}
+
+name: atbs
+
 services:
   # 网关服务
   atbs-gateway:
     build:
-      context: ./atbs-gateway
-      dockerfile: docker/Dockerfile
+      context: ..
+      dockerfile: atbs-gateway/docker/Dockerfile
+      # 构建时挂载 secret
+      secrets:
+        - settings
     container_name: atbs-gateway
     image: atbs/atbs-gateway:latest
     restart: unless-stopped
@@ -18,13 +31,15 @@ services:
       - "8080:8080"
     networks:
       - backend-network
-    
+
 
   # 认证服务
   auth-service:
     build:
-      context: ./auth-service
-      dockerfile: docker/Dockerfile
+      context: ..
+      dockerfile: auth-service/docker/Dockerfile
+      secrets:
+        - settings
     container_name: auth-service
     image: atbs/auth-service:latest
     restart: unless-stopped
@@ -35,13 +50,15 @@ services:
       - "8081:8081"
     networks:
       - backend-network
-    
+
 
   # 用户服务
   user-service:
     build:
-      context: ./user-service
-      dockerfile: docker/Dockerfile
+      context: ..
+      dockerfile: user-service/docker/Dockerfile
+      secrets:
+        - settings
     container_name: user-service
     image: atbs/user-service:latest
     restart: unless-stopped
@@ -52,13 +69,15 @@ services:
       - "8082:8082"
     networks:
       - backend-network
-    
+
 
   # 订单服务
   order-service:
     build:
-      context: ./order-service
-      dockerfile: docker/Dockerfile
+      context: ..
+      dockerfile: order-service/docker/Dockerfile
+      secrets:
+        - settings
     container_name: order-service
     image: atbs/order-service:latest
     restart: unless-stopped
@@ -69,13 +88,15 @@ services:
       - "8083:8083"
     networks:
       - backend-network
-    
+
 
   # 航班服务
   airplane-service:
     build:
-      context: ./airplane-service
-      dockerfile: docker/Dockerfile
+      context: ..
+      dockerfile: airplane-service/docker/Dockerfile
+      secrets:
+        - settings
     container_name: airplane-service
     image: atbs/airplane-service:latest
     restart: unless-stopped
@@ -90,8 +111,8 @@ services:
 
   prediction-service:
     build:
-      context: ./prediction-service
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: prediction-service/docker/Dockerfile
     container_name: prediction-service
     image: atbs/prediction-service:latest
     restart: unless-stopped

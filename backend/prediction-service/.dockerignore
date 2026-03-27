@@ -46,7 +46,7 @@ model/*.pkl
 .gitignore
 
 # Docker
-Dockerfile
+docker/Dockerfile
 docker-compose.yml
 .dockerignore
 

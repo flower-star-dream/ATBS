@@ -33,7 +33,7 @@ prediction:
 cors:
   origins:
     - "http://localhost:3000"
-    - "http://localhost:8080"
+    - "http://localhost:8085"
 
 logging:
   level:
@@ -44,7 +44,7 @@ logging:
     com.alibaba.cloud.nacos: INFO
   file:
     enabled: true
-    path: ../logs/${spring.application.name}
+    path: logs/${spring.application.name}
     name: ${spring.application.name}.log
     history-pattern: ${spring.application.name}-%d{yyyy-MM-dd}.log
     max-history: 30
