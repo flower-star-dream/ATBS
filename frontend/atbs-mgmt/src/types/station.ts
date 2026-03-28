@@ -2,7 +2,7 @@
 import type { PageQuery } from './index'
 
 /**
- * 站点基础类型（对应hcd_station表）
+ * 站点基础类型（对应atbs_station表）
  */
 export interface Station {
   id: number                    // 站点号（bigint）

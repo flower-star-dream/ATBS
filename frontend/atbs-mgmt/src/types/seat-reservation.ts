@@ -1,11 +1,11 @@
 // 座位预订相关类型定义
 
 /**
- * 座位预订基础类型（对应hcd_seat_reservation表）
+ * 座位预订基础类型（对应atbs_seat_reservation表）
  */
 export interface SeatReservation {
   id: number                    // 座位预订号（bigint）
-  scheduleId: number           // 班次号（bigint）- 外键关联hcd_schedule
+  scheduleId: number           // 班次号（bigint）- 外键关联atbs_schedule
   seatNum: number           // 座位号（int）
   bookingStatus: number        // 预订状态（int）- 0:可预订, 1:已预订, 2:已锁定
   createTime?: string          // 创建时间

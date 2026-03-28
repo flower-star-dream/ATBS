@@ -1,6 +1,5 @@
 // 乘车人相关类型定义
 import { PageQuery } from './index'
-
 /**
  * 乘车人基本信息
  */

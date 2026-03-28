@@ -10,23 +10,28 @@ import { getEnv } from './env'
 const env = getEnv()
 
 // 服务模块配置常量
-// 注意：路径格式已调整为 /api/{service}/v1/*/*
 const serviceConfig = {
-  // 开发环境服务配置
+  // 开发环境服务配置 - 路径为空，由gateway处理路由
   development: {
     user: '',
+    trainSeat: '',
+    ticket: '',
     order: '',
     system: ''
   },
-  // 测试环境服务配置
+  // 测试环境服务配置 - 路径为空，由gateway处理路由
   staging: {
     user: '',
+    trainSeat: '',
+    ticket: '',
     order: '',
     system: ''
   },
-  // 生产环境服务配置
+  // 生产环境服务配置 - 路径为空，由gateway处理路由
   production: {
     user: '',
+    trainSeat: '',
+    ticket: '',
     order: '',
     system: ''
   }
@@ -34,16 +39,16 @@ const serviceConfig = {
 
 /**
  * 主配置对象 - 包含所有环境的默认配置
- * 注意：apiPrefix已从 /api/v1/mgmt 调整为 /api/mgmt/v1
+ * 如需修改配置，只需修改此对象中的对应值
  */
 const defaultConfig: Config = {
   baseUrl: 'http://localhost:8080',
-  ossUrl: 'http://localhost:9000/hcd',
-  apiPrefix: '/api/mgmt/v1',
+  ossUrl: 'http://localhost:9000/atbs',
+  apiPrefix: '/api/v1/mgmt',
   timeout: 10000,
   mock: false,
   debug: true,
-  title: '飞机订票系统-后端管理',
+  title: '火车订票系统-后端管理',
   services: serviceConfig.development
 }
 
@@ -54,28 +59,27 @@ const defaultConfig: Config = {
 const envConfigs: Record<string, Partial<Config>> = {
   // 开发环境特定配置
   development: {
-    title: '飞机订票系统-后端管理 - 开发环境',
+    title: '火车订票系统-后端管理 - 开发环境',
     services: serviceConfig.development
   },
-
+  
   // 测试环境特定配置
   staging: {
-    baseUrl: 'https://hcd.flower-star-dream.top',
-    ossUrl: 'https://hcd.flower-star-dream.top/hcd',
+    baseUrl: 'https://atbs.flower-star-dream.top',
+    ossUrl: 'https://atbs.flower-star-dream.top/atbs',
     mock: false,
     debug: true,
-    title: '飞机订票系统-后端管理 - 测试环境',
+    title: '火车订票系统-后端管理 - 测试环境',
     services: serviceConfig.staging
   },
-
+  
   // 生产环境特定配置
   production: {
-    baseUrl: 'https://hcd.flower-star-dream.top',
-    ossUrl: 'https://hcd.flower-star-dream.top/hcd',
+    baseUrl: 'https://atbs.flower-star-dream.top',
+    ossUrl: 'https://atbs.flower-star-dream.top/atbs',
     timeout: 30000,
     mock: false,
     debug: false,
-    title: '飞机订票系统-后端管理',
     services: serviceConfig.production
   }
 }

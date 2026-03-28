@@ -1,4 +1,4 @@
-import { orderRequest } from '@/utils/request'
+import { trainSeatRequest } from '@/utils/request'
 import type {
   SeatReservation,
   SeatReservationList,
@@ -17,7 +17,7 @@ import type { StatusCount } from '@/types'
  * @returns 座位预订分页列表
  */
 export const getSeatReservationList = (params: SeatReservationQuery): Promise<PageResult<SeatReservationList>> => {
-  return orderRequest.get('/seatReservation/getSeatReservation', { params })
+  return trainSeatRequest.get('/seatReservation/getSeatReservation', { params })
 }
 
 /**
@@ -26,7 +26,7 @@ export const getSeatReservationList = (params: SeatReservationQuery): Promise<Pa
  * @returns 添加响应
  */
 export const addSeatReservation = (data: Partial<SeatReservationForm>): Promise<void> => {
-  return orderRequest.post('/seatReservation/addSeatReservation', data)
+  return trainSeatRequest.post('/seatReservation/addSeatReservation', data)
 }
 
 /**
@@ -35,7 +35,7 @@ export const addSeatReservation = (data: Partial<SeatReservationForm>): Promise<
  * @returns 更新响应
  */
 export const updateSeatReservation = (data: Partial<SeatReservationForm>): Promise<void> => {
-  return orderRequest.put('/seatReservation/updateSeatReservation', data)
+  return trainSeatRequest.put('/seatReservation/updateSeatReservation', data)
 }
 
 /**
@@ -44,7 +44,7 @@ export const updateSeatReservation = (data: Partial<SeatReservationForm>): Promi
  * @returns 删除响应
  */
 export const deleteSeatReservation = (ids: number[]): Promise<void> => {
-  return orderRequest.delete('/seatReservation/deleteSeatReservation', { data: ids })
+  return trainSeatRequest.delete('/seatReservation/deleteSeatReservation', { data: ids })
 }
 
 /**
@@ -54,7 +54,7 @@ export const deleteSeatReservation = (ids: number[]): Promise<void> => {
  * @returns 更新响应
  */
 export const batchUpdateSeatStatus = (data: Partial<SeatReservationChangeStatusREQ>): Promise<ApiResponse> => {
-  return orderRequest.put('/seatReservation/batch-update-status', data)
+  return trainSeatRequest.put('/seatReservation/batch-update-status', data)
 }
 
 /**
@@ -65,7 +65,7 @@ export const batchUpdateSeatStatus = (data: Partial<SeatReservationChangeStatusR
  * @returns 检查结果
  */
 export const checkSeatAvailability = (scheduleId: number, seatNum: number, excludeId?: number): Promise<boolean> => {
-  return orderRequest.get('/seatReservation/check-availability', {
+  return trainSeatRequest.get('/seatReservation/check-availability', {
     params: { scheduleId, seatNum, excludeId }
   })
 }
@@ -76,5 +76,5 @@ export const checkSeatAvailability = (scheduleId: number, seatNum: number, exclu
  * @returns 座位状态统计信息
  */
 export const getStatus = (): Promise<StatusCount[]> => {
-  return orderRequest.get('/seatReservation/getStatus')
+  return trainSeatRequest.get('/seatReservation/getStatus')
 }

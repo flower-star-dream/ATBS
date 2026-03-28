@@ -4,7 +4,7 @@ import type { Route } from './route'
 import type { Station } from './station'
 
 /**
- * 线路站点关联基础类型（对应hcd_route_stations表）
+ * 线路站点关联基础类型（对应atbs_route_stations表）
  */
 export interface RouteStation {
   id: number                    // 路线站点号（bigint）

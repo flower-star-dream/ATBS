@@ -61,9 +61,9 @@ Schedule/
 
 ## 数据模型
 
-### 班次表 (hcd_schedule)
+### 班次表 (atbs_schedule)
 ```sql
-CREATE TABLE `hcd_schedule` (
+CREATE TABLE `atbs_schedule` (
   `id` bigint NOT NULL COMMENT '班次号',
   `train_id` bigint NOT NULL COMMENT '列车号',
   `route_id` bigint NOT NULL COMMENT '线路号',
@@ -76,7 +76,7 @@ CREATE TABLE `hcd_schedule` (
   `create_person` varchar(30) NOT NULL COMMENT '创建人',
   `update_person` varchar(30) NOT NULL COMMENT '更新者',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='hcd_班次';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='atbs_班次';
 ```
 
 ## 使用说明

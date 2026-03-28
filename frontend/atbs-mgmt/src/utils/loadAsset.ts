@@ -1,7 +1,7 @@
 /**
  * 先尝试远程地址，失败再返回本地地址
- * @param {string} remotePath  远程绝对路径，如 https://xxx/assets/hcd/logo.png
- * @param {string} localFile   本地相对路径，如 @/assets/hcd/logo.png
+ * @param {string} remotePath  远程绝对路径，如 https://xxx/assets/atbs/logo.png
+ * @param {string} localFile   本地相对路径，如 @/assets/atbs/logo.png
  * @returns {Promise<string>}  最终可用的图片地址
  */
 export function loadAsset(remotePath: string, localFile: string): Promise<string> {

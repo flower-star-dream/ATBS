@@ -4,7 +4,7 @@
       <div class="login-header">
         <div class="logo">
           <!-- <img src="/vite.svg" alt="logo" /> -->
-          <h2>飞机订票系统 - 员工登录</h2>
+          <h2>火车订票系统 - 员工登录</h2>
         </div>
       </div>
 
@@ -55,12 +55,12 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { useAuthStore } from '@/stores'
+import { useEmployeeStore } from '@/stores'
 import { md5ToHex } from '@/utils/md5'
 import { strToBase64 } from '@/utils/base64'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const employeeStore = useEmployeeStore()
 
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
@@ -125,8 +125,8 @@ const handleLogin = async () => {
           // 如果是手机号，只传递phone字段；否则只传递username字段
           ...(isPhone ? { phone: loginForm.username, username: ''} : { username: loginForm.username, phone: '' })
         }
-
-        await authStore.loginAction(loginParams)
+        
+        await employeeStore.loginAction(loginParams)
       ElMessage.success('登录成功')
       router.push('/home')
       } catch (error: any) {

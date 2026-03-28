@@ -142,7 +142,7 @@ const handleCancel = () => {
 
 ## 数据模型
 
-### 数据库表结构 (hcd_seat_reservation)
+### 数据库表结构 (atbs_seat_reservation)
 
 | 字段名 | 类型 | 描述 |
 |--------|------|------|

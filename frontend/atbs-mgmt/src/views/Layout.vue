@@ -193,8 +193,8 @@ onMounted(async () => {
         console.error('获取员工信息失败:', error)
         ElMessage.error('获取员工信息失败，请重新登录')
     }
-    logoUrl.value = await loadAsset(`${ossUrl}/assets/hcd/logo.png`, '../assets/hcd/logo.png');
-    avatarUrl.value = await loadAsset(employeeInfo.value?.avatar, '../assets/hcd/Avatar.png');
+    logoUrl.value = await loadAsset(`${ossUrl}/assets/atbs/logo.png`, '../assets/atbs/logo.png');
+    avatarUrl.value = await loadAsset(employeeInfo.value?.avatar, '../assets/atbs/Avatar.png');
 })
 </script>
 

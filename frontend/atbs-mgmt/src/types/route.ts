@@ -2,7 +2,7 @@
 import type { PageQuery } from './index'
 
 /**
- * 线路基础类型（对应hcd_route表）
+ * 线路基础类型（对应atbs_route表）
  */
 export interface Route {
   id: number                    // 线路号（bigint）
@@ -10,7 +10,7 @@ export interface Route {
   startStation: string         // 起点站（varchar(50)）
   endStation: string           // 终点站（varchar(50)）
   stationCount: number         // 站点数（int）
-  startStationName: string       // 起点站名（varchar(50））
+  startStationName: string       // 起点站名（varchar(50））  
   endStationName: string         // 终点站名（varchar(50））
   createTime?: string          // 创建时间
   updateTime?: string          // 更新时间

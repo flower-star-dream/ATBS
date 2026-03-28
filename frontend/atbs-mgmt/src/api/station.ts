@@ -1,4 +1,4 @@
-import { orderRequest } from '@/utils/request'
+import { trainSeatRequest } from '@/utils/request'
 import type { ApiResponse, PageQuery, PageResult } from '@/types'
 import type { Station, StationQuery, StationForm } from '@/types/station'
 
@@ -8,7 +8,7 @@ import type { Station, StationQuery, StationForm } from '@/types/station'
  * @returns 站点分页列表
  */
 export const getStationList = (params: StationQuery): Promise<PageResult<Station>> => {
-  return orderRequest.get('/station/getStation', { params })
+  return trainSeatRequest.get('/station/getStation', { params })
 }
 
 /**
@@ -17,7 +17,7 @@ export const getStationList = (params: StationQuery): Promise<PageResult<Station
  * @returns 添加响应
  */
 export const addStation = (data: StationForm): Promise<void> => {
-  return orderRequest.post('/station/addStation', data)
+  return trainSeatRequest.post('/station/addStation', data)
 }
 
 /**
@@ -26,7 +26,7 @@ export const addStation = (data: StationForm): Promise<void> => {
  * @returns 更新响应
  */
 export const updateStation = (data: StationForm): Promise<void> => {
-  return orderRequest.put('/station/updateStation', data)
+  return trainSeatRequest.put('/station/updateStation', data)
 }
 
 /**
@@ -35,5 +35,5 @@ export const updateStation = (data: StationForm): Promise<void> => {
  * @returns 删除响应
  */
 export const deleteStation = (ids: number[]): Promise<void> => {
-  return orderRequest.delete('/station/deleteStation', { data: ids })
+  return trainSeatRequest.delete('/station/deleteStation', { data: ids })
 }

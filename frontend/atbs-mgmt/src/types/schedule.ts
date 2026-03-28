@@ -2,12 +2,12 @@
 import type { PageQuery } from './index'
 
 /**
- * 班次基础类型（对应hcd_schedule表）
+ * 班次基础类型（对应atbs_schedule表）
  */
 export interface Schedule {
   id: number                    // 班次号（bigint）
-  trainId: number              // 列车号（bigint）- 外键关联hcd_train
-  routeId: number              // 线路号（bigint）- 外键关联hcd_route
+  trainId: number              // 列车号（bigint）- 外键关联atbs_train
+  routeId: number              // 线路号（bigint）- 外键关联atbs_route
   conductor: string            // 列车长（varchar(10)）
   availableTickets: number     // 余票（int）
   startTime: string            // 出发时间（datetime）
@@ -40,7 +40,6 @@ export interface ScheduleQuery extends PageQuery {
   availableTicketsMin?: number // 最小余票数
   availableTicketsMax?: number // 最大余票数
 }
-
 export interface RealTimeSchedulePageQueryREQ extends PageQuery {
   nowTime?: string
   startStationId?: string
@@ -48,7 +47,7 @@ export interface RealTimeSchedulePageQueryREQ extends PageQuery {
 }
 
 export interface RealTimeScheduleRES extends Schedule {
-
+  
 }
 
 /**

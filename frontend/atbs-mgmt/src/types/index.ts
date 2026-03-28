@@ -31,46 +31,14 @@ export interface StartOrStopForm {
   status: number
 }
 
-// 导出认证相关类型
-export * from './auth'
-
-// 导出员工相关类型（排除与auth冲突的LoginForm和LoginResponse）
-export {
-  Employee,
-  EmployeeInfo,
-  EmployeeList,
-  ResetPasswordForm
-} from './employee'
-
-// 导出用户相关类型
-export {
-  User,
-  UserList
-} from './user'
-
-// 导出乘车人相关类型
+export * from './employee'
+export * from './train'
+export * from './user'
 export * from './passenger'
-
-// 导出订单相关类型
 export * from './order'
-
-// 导出票务相关类型
 export * from './ticket'
-
-// 导出班次相关类型
 export * from './schedule'
-
-// 导出座位预订相关类型
 export * from './seat-reservation'
-
-// 导出线路相关类型
 export * from './route'
-
-// 导出站点相关类型
 export * from './station'
-
-// 导出线路站点关联相关类型
 export * from './route-station'
-
-// 导出飞机相关类型
-export * from './aircraft'

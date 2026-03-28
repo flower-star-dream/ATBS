@@ -49,12 +49,12 @@
   "description": "atbs-mgmt",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flower-star-dream/HCD.git"
+    "url": "git+https://github.com/flower-star-dream/atbs.git"
   },
   "author": "花海",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/flower-star-dream/HCD/issues"
+    "url": "https://github.com/flower-star-dream/atbs/issues"
   },
-  "homepage": "https://github.com/flower-star-dream/HCD#readme"
+  "homepage": "https://github.com/flower-star-dream/atbs#readme"
 }
