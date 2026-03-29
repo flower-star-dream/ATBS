@@ -2,7 +2,7 @@
 
 ## 概述
 
-座位预订管理模块是火车订票系统后台管理的重要组成部分，用于管理列车班次的座位预订信息。该模块提供了座位预订的增删改查、状态管理、批量操作等功能。
+座位预订管理模块是飞机订票系统后台管理的重要组成部分，用于管理航班的座位预订信息。该模块提供了座位预订的增删改查、状态管理、批量操作等功能。
 
 ## 功能特性
 
@@ -10,7 +10,7 @@
 
 **主要功能：**
 - 座位预订信息的分页展示
-- 多条件搜索（班次、座位号、预订状态）
+- 多条件搜索（航班、座位号、预订状态）
 - 批量操作（批量状态更新、批量删除）
 - 座位状态管理（可预订 → 已预订 → 已锁定）
 - 实时座位可用性检查
@@ -24,7 +24,7 @@
 ### 2. 座位预订对话框组件 (SeatReservation-dialog-view.vue)
 
 **主要功能：**
-- 班次选择下拉框，显示班次详细信息
+- 航班选择下拉框，显示航班详细信息
 - 座位号输入和可用性检查
 - 预订状态选择和说明
 - 座位状态统计信息展示
@@ -33,7 +33,7 @@
 **界面特性：**
 - 分组表单字段布局
 - 实时座位可用性检查
-- 班次详情展示
+- 航班详情展示
 - 状态说明和提示信息
 
 ### 3. 数据类型定义 (seat-reservation.ts)
@@ -43,7 +43,7 @@
 - `SeatReservationList`: 列表展示类型
 - `SeatReservationForm`: 表单数据类型
 - `BookingStatus`: 预订状态枚举
-- `ScheduleOption`: 班次选择项类型
+- `FlightOption`: 航班选择项类型
 
 ## 技术实现
 
@@ -61,7 +61,7 @@ SeatReservation/
 
 - **UI 框架**: Element Plus
 - **状态管理**: Pinia (员工信息)
-- **HTTP 客户端**: Axios (通过 trainSeatRequest 封装)
+- **HTTP 客户端**: Axios (通过 airplaneRequest 封装)
 - **路由**: Vue Router
 - **类型定义**: TypeScript
 
@@ -75,10 +75,10 @@ createSeatReservation(data: Partial<SeatReservationForm>) // 创建
 updateSeatReservation(id: number, data: Partial<SeatReservationForm>) // 更新
 deleteSeatReservation(id: number)                       // 删除
 batchDeleteSeatReservation(ids: number[])               // 批量删除
-getScheduleOptions()                                    // 获取班次选项
+getFlightOptions()                                    // 获取航班选项
 updateSeatStatus(id: number, status: number)            // 更新状态
 batchUpdateSeatStatus(ids: number[], status: number)    // 批量更新状态
-checkSeatAvailability(scheduleId: number, seatNumber: number) // 检查可用性
+checkSeatAvailability(flightId: number, seatNumber: number) // 检查可用性
 ```
 
 ## 使用说明
@@ -87,7 +87,7 @@ checkSeatAvailability(scheduleId: number, seatNumber: number) // 检查可用性
 
 1. **访问路径**: `/seat-reservation/list`
 2. **主要操作**:
-   - 搜索：通过班次、座位号、预订状态进行筛选
+   - 搜索：通过航班、座位号、预订状态进行筛选
    - 新增：点击"新增座位预订"按钮
    - 编辑：点击行内的"编辑"按钮
    - 状态更新：点击相应的状态变更按钮
@@ -147,7 +147,7 @@ const handleCancel = () => {
 | 字段名 | 类型 | 描述 |
 |--------|------|------|
 | id | bigint | 座位预订号（主键） |
-| schedule_id | bigint | 班次号（外键） |
+| flight_id | bigint | 航班号（外键） |
 | seat_number | int | 座位号 |
 | booking_status | int | 预订状态（0:可预订, 1:已预订, 2:已锁定） |
 | create_time | datetime | 创建时间 |
@@ -160,7 +160,7 @@ const handleCancel = () => {
 ```typescript
 interface SeatReservation {
   id: number
-  scheduleId: number
+  flightId: number
   seatNumber: number
   bookingStatus: number
   createTime?: string
@@ -195,16 +195,16 @@ interface SeatReservation {
 ## 常见问题
 
 ### Q: 座位号范围是如何确定的？
-A: 座位号范围基于班次的 availableTickets 字段，最大不超过 999。
+A: 座位号范围基于航班的 availableTickets 字段，最大不超过 999。
 
 ### Q: 如何处理座位号冲突？
-A: 系统会在保存前检查座位可用性，同一班次的相同座位号不允许重复预订。
+A: 系统会在保存前检查座位可用性，同一航班的相同座位号不允许重复预订。
 
 ### Q: 批量操作失败怎么办？
 A: 批量操作会逐个处理，部分失败时会提示成功和失败的数量，成功的操作不会回滚。
 
 ### Q: 座位状态统计信息多久更新一次？
-A: 每次选择班次时都会实时获取最新的座位状态统计信息。
+A: 每次选择航班时都会实时获取最新的座位状态统计信息。
 
 ## 更新日志
 

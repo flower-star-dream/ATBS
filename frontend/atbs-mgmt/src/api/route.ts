@@ -1,39 +1,38 @@
-import { trainSeatRequest } from '@/utils/request'
-import type { ApiResponse, PageQuery, PageResult } from '@/types'
-import type { Route, RouteQuery, RouteForm } from '@/types/route'
+import { airplaneRequest } from '@/utils/request'
+import type { ApiResponse, PageQuery, PageResult, Route, RouteQuery, RouteForm } from '@/types'
 
 /**
- * 添加路线
- * @param data 路线信息
+ * 添加航线
+ * @param data 航线信息
  * @returns 添加响应
  */
 export const addRoute = (data: RouteForm): Promise<void> => {
-  return trainSeatRequest.post('/route/addRoute', data)
+  return airplaneRequest.post('/route/addRoute', data)
 }
 
 /**
- * 删除路线
- * @param ids 路线ID列表
+ * 删除航线
+ * @param ids 航线ID列表
  * @returns 删除响应
  */
 export const deleteRoute = (ids: number[]): Promise<void> => {
-  return trainSeatRequest.delete('/route/deleteRoute', { data: ids })
+  return airplaneRequest.delete('/route/deleteRoute', { data: ids })
 }
 
 /**
- * 更新路线
- * @param data 路线信息
+ * 更新航线
+ * @param data 航线信息
  * @returns 更新响应
  */
 export const updateRoute = (data: RouteForm): Promise<void> => {
-  return trainSeatRequest.put('/route/updateRoute', data)
+  return airplaneRequest.put('/route/updateRoute', data)
 }
 
 /**
- * 获取路线列表
+ * 获取航线列表
  * @param params 分页查询参数
- * @returns 路线分页列表
+ * @returns 航线分页列表
  */
 export const getRouteList = (params: RouteQuery): Promise<PageResult<Route>> => {
-  return trainSeatRequest.get('/route/getRoute', { params })
+  return airplaneRequest.get('/route/getRoute', { params })
 }

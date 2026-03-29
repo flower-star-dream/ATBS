@@ -1,10 +1,22 @@
 // 服务模块配置类型
 export interface ServiceConfig {
+  auth: string
   user: string
-  trainSeat: string
-  ticket: string
+  airplane: string
   order: string
-  system: string
+  prediction: string
+}
+
+// OAuth2 配置类型
+export interface OAuth2Config {
+  /** 认证服务基础地址 */
+  authBaseUrl: string
+  /** 客户端ID */
+  clientId: string
+  /** 客户端密钥 */
+  clientSecret: string
+  /** 权限范围 */
+  scope: string
 }
 
 // 环境配置类型定义
@@ -17,6 +29,7 @@ export interface Config {
   debug: boolean
   title: string
   services: ServiceConfig
+  oauth2: OAuth2Config
 }
 
 // API响应类型

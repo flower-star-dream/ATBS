@@ -16,6 +16,7 @@ import top.flowerstardream.atbs.tools.client.AuthClient;
 import top.flowerstardream.atbs.tools.interfaces.IUserResolveService;
 import top.flowerstardream.base.handler.MyMetaObjectHandler;
 import top.flowerstardream.base.resolver.UserNameResolver;
+import top.flowerstardream.base.utils.RedisUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -39,6 +40,9 @@ public class RemoteUserNameResolver implements UserNameResolver {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private RedisUtils redisUtils;
     
     private static final String KEY_PREFIX = "sys:user:name:";
     private static final Duration TTL = Duration.ofHours(24);
@@ -57,7 +61,7 @@ public class RemoteUserNameResolver implements UserNameResolver {
             .map(id -> KEY_PREFIX + id)
             .collect(Collectors.toList());
         
-        List<String> cached = stringRedisTemplate.opsForValue().multiGet(keys);
+        List<String> cached = redisUtils.execute("multiGet",() -> stringRedisTemplate.opsForValue().multiGet(keys));
         int idx = 0;
         for (Long id : userIds) {
             String name = null;
@@ -90,14 +94,14 @@ public class RemoteUserNameResolver implements UserNameResolver {
 
         CompletableFuture.runAsync(() -> {
             try {
-                stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+                redisUtils.execute("executePipelined", () -> stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
                     data.forEach((id, name) -> {
                         byte[] key = (KEY_PREFIX + id).getBytes(StandardCharsets.UTF_8);
                         byte[] val = name.getBytes(StandardCharsets.UTF_8);
                         connection.stringCommands().set(key, val, Expiration.from(TTL), RedisStringCommands.SetOption.UPSERT);
                     });
                     return null;
-                });
+                }));
             } catch (Exception e) {
                 // 记录日志，不影响主流程
                 log.warn("异步写入Redis失败", e);

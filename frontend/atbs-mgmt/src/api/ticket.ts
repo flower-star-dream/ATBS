@@ -1,4 +1,4 @@
-import { ticketRequest } from '@/utils/request'
+import { orderRequest } from '@/utils/request'
 import type * as T from '@/types'
 
 /**
@@ -7,7 +7,7 @@ import type * as T from '@/types'
  * @returns 车票分页列表
  */
 export const getTicketListService = (params: T.TicketPageQueryREQ): Promise<T.PageResult<T.Ticket>> => {
-  return ticketRequest.get('/ticket/page', { params })
+  return orderRequest.get('/ticket/page', { params })
 }
 
 /**
@@ -16,11 +16,11 @@ export const getTicketListService = (params: T.TicketPageQueryREQ): Promise<T.Pa
  * @returns 车票详情
  */
 export const getTicketDetailService = (id: string): Promise<T.ApiResponse<T.TicketDetail>> => {
-  return ticketRequest.get(`/ticket/${id}`)
+  return orderRequest.get(`/ticket/${id}`)
 }
 
 export const getTicketDetailByOrderIdService = (id: string): Promise<T.ApiResponse<T.TicketDetail>> => {
-  return ticketRequest.get(`/ticket/order/${id}`)
+  return orderRequest.get(`/ticket/order/${id}`)
 }
 
 /**
@@ -29,10 +29,10 @@ export const getTicketDetailByOrderIdService = (id: string): Promise<T.ApiRespon
  * @returns 更新响应
  */
 export const updateTicketStatusService = (data: T.TicketStatusUpdateREQ): Promise<T.ApiResponse> => {
-  return ticketRequest.post('/ticket/status', {
+  return orderRequest.post('/ticket/status', {
     id: data.id,
     status: data.status,
-    scheduleId: data.scheduleId || undefined,
+    flightId: data.flightId || undefined,
     startStationId: data.startStationId || undefined,
     endStationId: data.endStationId || undefined
   })

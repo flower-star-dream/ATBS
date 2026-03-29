@@ -60,10 +60,10 @@ public class AuthPermissionServiceImpl extends ServiceImpl<AuthPermissionMapper,
         userRoleWrapper.eq(UserRoleEO::getUserId, userId);
         List<UserRoleEO> userRoles = authUserRoleMapper.selectList(userRoleWrapper);
         LambdaQueryWrapper<RolePermissionEO> rolePermissionWrapper = new LambdaQueryWrapper<>();
-        rolePermissionWrapper.in(RolePermissionEO::getRoleId, userRoles.stream().map(UserRoleEO::getRoleId));
+        rolePermissionWrapper.in(RolePermissionEO::getRoleId, userRoles.stream().map(UserRoleEO::getRoleId).toList());
         List<RolePermissionEO> rolePermissions = authRolePermissionMapper.selectList(rolePermissionWrapper);
         LambdaQueryWrapper<PermissionEO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(PermissionEO::getId, rolePermissions.stream().map(RolePermissionEO::getPermissionId));
+        queryWrapper.in(PermissionEO::getId, rolePermissions.stream().map(RolePermissionEO::getPermissionId).toList());
         return authPermissionMapper.selectList(queryWrapper);
     }
 
@@ -79,7 +79,7 @@ public class AuthPermissionServiceImpl extends ServiceImpl<AuthPermissionMapper,
         rolePermissionWrapper.eq(RolePermissionEO::getRoleId, roleId);
         List<RolePermissionEO> rolePermissions = authRolePermissionMapper.selectList(rolePermissionWrapper);
         LambdaQueryWrapper<PermissionEO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(PermissionEO::getId, rolePermissions.stream().map(RolePermissionEO::getPermissionId));
+        queryWrapper.in(PermissionEO::getId, rolePermissions.stream().map(RolePermissionEO::getPermissionId).toList());
         return authPermissionMapper.selectList(queryWrapper);
     }
 }

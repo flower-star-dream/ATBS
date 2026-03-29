@@ -21,28 +21,28 @@ const routes: RouteRecordRaw[] = [
       //   meta: { title: '仪表盘', icon: 'Odometer' }
       // },
       {
-        path: '/train',
-        name: 'Train',
-        meta: { title: '列车管理', icon: 'Train' },
+        path: '/airplane',
+        name: 'Airplane',
+        meta: { title: '飞机管理', icon: 'Airplane' },
         children: [
           {
-            path: '/train/list',
-            name: 'TrainList',
-            component: () => import('@/views/Train/Train-list-view/Train-list-view.vue'),
-            meta: { title: '列车列表' }
+            path: '/airplane/list',
+            name: 'AirplaneList',
+            component: () => import('@/views/Airplane/Airplane-list-view/Airplane-list-view.vue'),
+            meta: { title: '飞机列表' }
           }
         ]
       },
       {
         path: '/schedule',
         name: 'Schedule',
-        meta: { title: '班次管理', icon: 'Calendar' },
+        meta: { title: '航班管理', icon: 'Calendar' },
         children: [
           {
             path: '/schedule/list',
             name: 'ScheduleList',
             component: () => import('@/views/Schedule/Schedule-list-view/Schedule-list-view.vue'),
-            meta: { title: '班次列表' }
+            meta: { title: '航班列表' }
           }
         ]
       },
@@ -68,7 +68,7 @@ const routes: RouteRecordRaw[] = [
             path: '/ticket/list',
             name: 'TicketList',
             component: () => import('@/views/Ticket/Ticket-list-view/Ticket-list-view.vue'),
-            meta: { title: '车票列表' }
+            meta: { title: '机票列表' }
           }
         ]
       },
@@ -113,13 +113,13 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/passenger',
         name: 'Passenger',
-        meta: { title: '乘车人管理', icon: 'User' },
+        meta: { title: '乘机人管理', icon: 'User' },
         children: [
           {
             path: '/passenger/list',
             name: 'PassengerList',
             component: () => import('@/views/Passenger/Passenger-list-view/Passenger-list-view.vue'),
-            meta: { title: '乘车人列表' }
+            meta: { title: '乘机人列表' }
           }
         ]
       },
@@ -139,26 +139,26 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/route',
         name: 'Route',
-        meta: { title: '线路管理', icon: 'Connection' },
+        meta: { title: '航线管理', icon: 'Connection' },
         children: [
           {
             path: '/route/list',
             name: 'RouteList',
             component: () => import('@/views/Route/Route-list-view/Route-list-view.vue'),
-            meta: { title: '线路列表' }
+            meta: { title: '航线列表' }
           }
         ]
       },
       {
         path: '/station',
         name: 'Station',
-        meta: { title: '站点管理', icon: 'Location' },
+        meta: { title: '机场管理', icon: 'Location' },
         children: [
           {
             path: '/station/list',
             name: 'StationList',
             component: () => import('@/views/Station/Station-list-view/Station-list-view.vue'),
-            meta: { title: '站点列表' }
+            meta: { title: '机场列表' }
           }
         ]
       }
@@ -170,6 +170,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Login',
     component: () => import('@/views/Login.vue'),
     meta: { title: '登录' }
+  },
+  {
+    path: '/oauth2/callback',
+    name: 'OAuth2Callback',
+    component: () => import('@/views/OAuth2Callback.vue'),
+    meta: { title: '登录回调' }
   },
   {
     path: '/:pathMatch(.*)*',
@@ -185,10 +191,17 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = `${to.meta.title || ''} - 火车订票系统后台`
+  document.title = `${to.meta.title || ''} - 飞机订票系统后台`
 
-  const token = localStorage.getItem('token')
-  if (to.path !== '/login' && !token) {
+  // 支持 OAuth2 Token 和旧版 Token
+  const token = localStorage.getItem('access_token') || localStorage.getItem('token')
+
+  // 白名单路径（不需要登录）
+  const whiteList = ['/login', '/oauth2/callback']
+
+  if (whiteList.includes(to.path)) {
+    next()
+  } else if (!token) {
     next('/login')
   } else {
     next()

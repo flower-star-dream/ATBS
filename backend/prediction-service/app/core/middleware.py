@@ -104,8 +104,10 @@ class ResponseFormatMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
 
             # 如果是 JSONResponse 且不是文档相关路径，进行格式化处理
+            path = request.url.path
+            doc_paths = ("/docs", "/redoc", "/openapi", "/doc", "/v3/api-docs", "/prediction-service")
             if (isinstance(response, JSONResponse) and
-                not request.url.path.startswith(("/docs", "/redoc", "/openapi"))):
+                not any(path.startswith(p) for p in doc_paths)):
                 return response
 
             return response

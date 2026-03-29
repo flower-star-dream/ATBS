@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse, ClientType } from '@/types'
+import { ClientType as ClientTypeEnum } from '@/types'
 import config from '@/config'
 
 // 请求拦截器
@@ -8,11 +9,10 @@ import type { InternalAxiosRequestConfig } from 'axios'
 
 const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   config.headers = config.headers || {}
-  // 无论是否登录，都添加X-Biz-Side头部
-  // 添加必需的X-Biz-Side头部，设置为admin，使用小写格式以匹配后端期望
-  config.headers['X-Biz-Side'] = 'admin'
-  // 如果有token，则添加Authorization头部
-  const token = localStorage.getItem('token')
+  // 添加客户端类型请求头，标识当前为管理后台Web端
+  config.headers['X-Client-Type'] = ClientTypeEnum.ADMIN_WEB
+  // 如果有token，则添加Authorization头部（支持OAuth2 Token和旧版Token）
+  const token = localStorage.getItem('access_token') || localStorage.getItem('token')
   if (token) {
     // 添加Bearer前缀，确保token格式正确
     config.headers.Authorization = `Bearer ${token}`
@@ -39,6 +39,10 @@ const responseInterceptor = (response: AxiosResponse<ApiResponse>) => {
 const errorResponseInterceptor = (error: any) => {
   // 处理401未授权错误
   if (error.response?.status === 401) {
+    // 清除所有Token
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('expires_at')
     localStorage.removeItem('token')
     window.location.href = '/login'
     ElMessage.error('登录已过期，请重新登录')
@@ -76,8 +80,38 @@ const createRequestInstance = (baseURL: string) => {
   return instance
 }
 
-// 默认请求实例
-const request = createRequestInstance(`${config.baseUrl}${config.apiPrefix}`)
+// 创建 OAuth2 请求实例（不使用标准响应拦截器，直接返回原始响应）
+const createOAuth2RequestInstance = (baseURL: string) => {
+  const instance = axios.create({
+    baseURL,
+    timeout: config.timeout
+  })
+  
+  // 只使用请求拦截器（添加认证头）
+  instance.interceptors.request.use(requestInterceptor, error => Promise.reject(error))
+  
+  // 响应拦截器：直接返回响应数据，不做格式转换
+  instance.interceptors.response.use(
+    (response) => response.data,
+    (error) => {
+      // 处理 OAuth2 错误响应
+      if (error.response?.data?.error) {
+        const oauth2Error = error.response.data
+        const errorMessage = oauth2Error.error_description || oauth2Error.error || 'OAuth2 请求失败'
+        return Promise.reject(new Error(errorMessage))
+      }
+      return Promise.reject(error)
+    }
+  )
+  
+  return instance
+}
+
+// 默认请求实例（使用网关基础地址，无前缀）
+const request = createRequestInstance(config.baseUrl)
+
+// OAuth2 专用请求实例
+export const oauth2Request = createOAuth2RequestInstance(config.baseUrl)
 
 /**
  * 根据服务模块创建请求方法
@@ -90,10 +124,10 @@ export const createServiceRequest = (module: keyof typeof config.services) => {
 }
 
 // 导出各个服务模块的请求实例
+export const authRequest = createServiceRequest('auth')
 export const userRequest = createServiceRequest('user')
-export const trainSeatRequest = createServiceRequest('trainSeat')
-export const ticketRequest = createServiceRequest('ticket')
+export const airplaneRequest = createServiceRequest('airplane')
 export const orderRequest = createServiceRequest('order')
-export const systemRequest = createServiceRequest('system')
+export const predictionRequest = createServiceRequest('prediction')
 
 export default request

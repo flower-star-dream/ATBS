@@ -41,6 +41,7 @@ import top.flowerstardream.base.result.PageResult;
 import top.flowerstardream.base.state.BaseEvent;
 import top.flowerstardream.base.state.BaseStatus;
 import top.flowerstardream.base.state.StateMachine;
+import top.flowerstardream.base.utils.RedisUtils;
 import top.flowerstardream.base.utils.StateRouteParams;
 import top.flowerstardream.base.utils.WeChatPayUtil;
 
@@ -82,6 +83,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private RedisUtils redisUtils;
+
 //    @Resource
 //    private WeChatPayUtil weChatPayUtil;
 
@@ -111,7 +115,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
 
         // 2. 幂等性校验, 10s内视为同一订单，不能重复创建订单
         String lockKey = ORDER_REPEAT_PREFIX + userId;
-        Boolean firstAccess = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(10));
+        Boolean firstAccess = redisUtils.execute("setIfAbsent", () -> stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(10)));
         if (Boolean.TRUE.equals(firstAccess)) {
             throw ORDER_REPEAT_CREATE.toException();
         }

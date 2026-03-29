@@ -18,26 +18,26 @@
       <!-- 列车选择 -->
       <el-form-item
         label="列车"
-        prop="trainId"
+        prop="airplaneId"
         :required="true"
       >
         <el-select
-          v-model="formData.trainId"
+          v-model="formData.airplaneId"
           placeholder="请选择列车"
-          :disabled="isFieldDisabled('trainId')"
+          :disabled="isFieldDisabled('airplaneId')"
           :clearable="true"
           style="width: 100%"
-          @change="handleTrainChange"
+          @change="handleAirplaneChange"
         >
           <el-option
-            v-for="option in trainOptions"
+            v-for="option in airplaneOptions"
             :key="option.value"
             :label="option.label"
             :value="option.value"
           >
             <span style="float: left">{{ option.label }}</span>
             <span style="float: right; color: #8492a6; font-size: 13px">
-              {{ option.trainModel }}
+              {{ option.airplaneModel }}
             </span>
           </el-option>
         </el-select>
@@ -200,7 +200,7 @@ const props = defineProps({
     type: Object,
     default: () => ({
       id: '',
-      trainId: '',
+      airplaneId: '',
       routeId: '',
       conductor: '',
       availableTickets: 0,
@@ -209,7 +209,7 @@ const props = defineProps({
     })
   },
   // 列车选项列表
-  trainOptions: {
+  airplaneOptions: {
     type: Array,
     default: () => []
   },
@@ -222,7 +222,7 @@ const props = defineProps({
   rules: {
     type: Object,
     default: () => ({
-      trainId: [{ required: true, message: '请选择列车', trigger: 'change' }],
+      airplaneId: [{ required: true, message: '请选择列车', trigger: 'change' }],
       routeId: [{ required: true, message: '请选择线路', trigger: 'change' }],
       conductor: [
         { required: true, message: '请输入列车长姓名', trigger: 'blur' },
@@ -289,7 +289,7 @@ const emit = defineEmits([
   'submit',
   'cancel',
   'close',
-  'train-change',
+  'airplane-change',
   'route-change',
   'start-time-change',
   'end-time-change'
@@ -358,17 +358,17 @@ const isFieldDisabled = (fieldName) => {
  * @returns {string} 预览文本
  */
 const getPreviewText = () => {
-  const trainName = props.trainOptions.find(item => item.value === props.formData.trainId)?.label || '未知列车'
+  const airplaneName = props.airplaneOptions.find(item => item.value === props.formData.airplaneId)?.label || '未知列车'
   const routeName = props.routeOptions.find(item => item.value === props.formData.routeId)?.label || '未知线路'
-  return `${trainName} - ${routeName}`
+  return `${airplaneName} - ${routeName}`
 }
 
 /**
  * 处理列车选择变化
  * @param {number} value - 选中的列车ID
  */
-const handleTrainChange = (value) => {
-  emit('train-change', value)
+const handleAirplaneChange = (value) => {
+  emit('airplane-change', value)
 }
 
 /**

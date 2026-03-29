@@ -20,11 +20,12 @@ import java.util.stream.Collectors;
 @Getter
 @AllArgsConstructor
 public enum ClientType implements IClientType {
-    ADMIN_WEB(1, "后管"),
-    APPLET(2, "小程序"),
-    SYSTEM(3, "系统");
+    ADMIN_WEB(1, "后管", "mgmt"),
+    APPLET(2, "小程序", "app"),
+    SYSTEM(3, "系统", "internal");
 
     private final Integer code;
+    private final String alias;
     private final String name;
 
     private static final Map<Integer, ClientType> CODE_MAP = Arrays.stream(values())

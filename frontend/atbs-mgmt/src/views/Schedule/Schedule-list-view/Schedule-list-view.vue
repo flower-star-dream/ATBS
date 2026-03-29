@@ -30,8 +30,8 @@
     </template>
 
     <!-- 自定义列车名列 -->
-    <template #column-trainName="{ row }">
-      <el-tag type="info" size="small">{{ row.trainName || '-' }}</el-tag>
+    <template #column-airplaneName="{ row }">
+      <el-tag type="info" size="small">{{ row.airplaneName || '-' }}</el-tag>
     </template>
 
     <!-- 自定义线路名列 -->
@@ -115,7 +115,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { getScheduleList, addSchedule, updateSchedule, deleteSchedule } from '@/api/schedule'
-import { getTrainList } from '@/api/train'
+import { getAircraftList } from '@/api/airplane'
 import { getRouteList } from '@/api/route'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useEmployeeStore } from '@/stores'
@@ -131,7 +131,7 @@ const isEdit = ref(false)
 const submitLoading = ref(false)
 const scheduleForm = ref({
   id: '',
-  trainId: '',
+  airplaneId: '',
   routeId: '',
   conductor: '',
   availableTickets: 0,
@@ -140,18 +140,18 @@ const scheduleForm = ref({
 })
 
 // 远程搜索相关响应式数据
-const searchTrains = ref([])
+const searchAirplanes = ref([])
 const searchRoutes = ref([])
-const trainLoading = ref(false)
+const airplaneLoading = ref(false)
 const routeLoading = ref(false)
 // 分页相关响应式数据
-const trainCurrentPage = ref(1)
+const airplaneCurrentPage = ref(1)
 const routeCurrentPage = ref(1)
-const trainTotal = ref(0)
+const airplaneTotal = ref(0)
 const routeTotal = ref(0)
-const trainKeyword = ref('')
+const airplaneKeyword = ref('')
 const routeKeyword = ref('')
-const trainAllLoaded = ref(false)
+const airplaneAllLoaded = ref(false)
 const routeAllLoaded = ref(false)
 const isLoadingMore = ref(false)
 
@@ -159,38 +159,38 @@ const isLoadingMore = ref(false)
  * 列车远程搜索方法
  * @param {string} query - 搜索关键词
  */
-const handleTrainRemoteSearch = async (query) => {
+const handleAirplaneRemoteSearch = async (query) => {
   // 重置状态
-  trainCurrentPage.value = 1
-  trainAllLoaded.value = false
-  trainKeyword.value = query
+  airplaneCurrentPage.value = 1
+  airplaneAllLoaded.value = false
+  airplaneKeyword.value = query
 
-  trainLoading.value = true
+  airplaneLoading.value = true
   try {
     // 调用带分页的API获取列车列表
-    const response = await getTrainList({
+    const response = await getAirplaneList({
       page: 1,
       pageSize: 10,
       keyword: query
     })
 
     // 更新总数和列车列表
-    trainTotal.value = response.total
-    searchTrains.value = response.records.map(train => ({
-      value: train.id,
-      label: train.trainName,
-      trainModel: train.trainModel,
-      seatNum: train.seatNum,
-      serviceYears: train.serviceYears
+    airplaneTotal.value = response.total
+    searchAirplanes.value = response.records.map(airplane => ({
+      value: airplane.id,
+      label: airplane.airplaneName,
+      airplaneModel: airplane.airplaneModel,
+      seatNum: airplane.seatNum,
+      serviceYears: airplane.serviceYears
     }))
   } catch (error) {
     ElMessage.error('获取列车列表失败')
-    searchTrains.value = []
+    searchAirplanes.value = []
   } finally {
-    trainLoading.value = false
+    airplaneLoading.value = false
     isLoadingMore.value = false
     // 添加滚动监听
-    addScrollListener('train')
+    addScrollListener('airplane')
   }
 }
 
@@ -236,19 +236,19 @@ const handleRouteRemoteSearch = async (query) => {
 // 表单字段配置
 const formFields = computed(() => [
   {
-    prop: 'trainId',
+    prop: 'airplaneId',
     label: '列车',
     type: 'select',
     placeholder: '请选择列车',
-    options: searchTrains,
+    options: searchAirplanes,
     required: true,
     clearable: true,
     filterable: true,
     remote: true,
-    remoteMethod: handleTrainRemoteSearch,
-    loading: trainLoading.value,
+    remoteMethod: handleAirplaneRemoteSearch,
+    loading: airplaneLoading.value,
     // 添加滚动事件监听以支持加载更多
-    popperClass: 'train-select',
+    popperClass: 'airplane-select',
     teleported: false,
     appendToBody: false
   },
@@ -302,7 +302,7 @@ const formFields = computed(() => [
 
 // 表单验证规则
 const formRules = computed(() => ({
-  trainId: [
+  airplaneId: [
     { required: true, message: '请选择列车', trigger: 'change' }
   ],
   routeId: [
@@ -344,7 +344,7 @@ const tableColumns = [
     align: 'center'
   },
   {
-    prop: 'trainName',
+    prop: 'airplaneName',
     label: '列车',
     minWidth: 120,
     align: 'center'
@@ -404,18 +404,18 @@ const tableColumns = [
 // 搜索字段配置
 const searchFields = computed(() => [
   {
-    prop: 'trainId',
+    prop: 'airplaneId',
     label: '列车',
     type: 'select',
     placeholder: '请选择列车',
-    options: searchTrains,
+    options: searchAirplanes,
     clearable: true,
     filterable: true,
     remote: true,
-    remoteMethod: handleTrainRemoteSearch,
-    loading: trainLoading.value,
+    remoteMethod: handleAirplaneRemoteSearch,
+    loading: airplaneLoading.value,
     // 添加滚动事件监听以支持加载更多
-    popperClass: 'train-select',
+    popperClass: 'airplane-select',
     teleported: false,
     appendToBody: false
   },
@@ -464,20 +464,20 @@ const getTicketStatusType = (tickets) => {
 /**
  * 获取列车选项列表（默认加载第一页数据）
  */
-const fetchTrainOptions = async () => {
+const fetchAirplaneOptions = async () => {
   try {
-    const response = await getTrainList({
+    const response = await getAirplaneList({
       page: 1,
       pageSize: 10
     })
     
-    trainTotal.value = response.total
-    searchTrains.value = response.records.map(train => ({
-      value: train.id,
-      label: train.trainName,
-      trainModel: train.trainModel,
-      seatNum: train.seatNum,
-      serviceYears: train.serviceYears
+    airplaneTotal.value = response.total
+    searchAirplanes.value = response.records.map(airplane => ({
+      value: airplane.id,
+      label: airplane.airplaneName,
+      airplaneModel: airplane.airplaneModel,
+      seatNum: airplane.seatNum,
+      serviceYears: airplane.serviceYears
     }))
   } catch (error) {
     console.error('获取列车选项失败:', error)
@@ -488,16 +488,16 @@ const fetchTrainOptions = async () => {
 
 /**
  * 加载更多数据（列车或线路）
- * @param {string} type - 类型：'train' 或 'route'
+ * @param {string} type - 类型：'airplane' 或 'route'
  */
 const loadMoreData = async (type) => {
   // 避免重复加载
   if (isLoadingMore.value) return
 
-  const isTrain = type === 'train'
-  const currentPage = isTrain ? trainCurrentPage.value : routeCurrentPage.value
-  const allLoaded = isTrain ? trainAllLoaded.value : routeAllLoaded.value
-  const keyword = isTrain ? trainKeyword.value : routeKeyword.value
+  const isAirplane = type === 'airplane'
+  const currentPage = isAirplane ? airplaneCurrentPage.value : routeCurrentPage.value
+  const allLoaded = isAirplane ? airplaneAllLoaded.value : routeAllLoaded.value
+  const keyword = isAirplane ? airplaneKeyword.value : routeKeyword.value
 
   // 如果已加载全部或无关键词，则不加载
   if (allLoaded || !keyword) return
@@ -505,8 +505,8 @@ const loadMoreData = async (type) => {
   isLoadingMore.value = true
   try {
     // 调用API获取下一页数据
-    const response = isTrain
-      ? await getTrainList({
+    const response = isAirplane
+      ? await getAirplaneList({
           page: currentPage + 1,
           pageSize: 10,
           keyword: keyword
@@ -518,26 +518,26 @@ const loadMoreData = async (type) => {
         })
 
     // 检查是否还有更多数据
-    const currentDataLength = isTrain ? searchTrains.value.length : searchRoutes.value.length
-    const hasMore = currentDataLength + response.records.length < (isTrain ? trainTotal.value : routeTotal.value)
+    const currentDataLength = isAirplane ? searchAirplanes.value.length : searchRoutes.value.length
+    const hasMore = currentDataLength + response.records.length < (isAirplane ? airplaneTotal.value : routeTotal.value)
 
     // 更新状态
-    if (isTrain) {
-      trainCurrentPage.value++
-      trainAllLoaded.value = !hasMore
+    if (isAirplane) {
+      airplaneCurrentPage.value++
+      airplaneAllLoaded.value = !hasMore
     } else {
       routeCurrentPage.value++
       routeAllLoaded.value = !hasMore
     }
 
     // 合并新数据到现有列表
-    const newOptions = isTrain
-      ? response.records.map(train => ({
-          value: train.id,
-          label: train.trainName,
-          trainModel: train.trainModel,
-          seatNum: train.seatNum,
-          serviceYears: train.serviceYears
+    const newOptions = isAirplane
+      ? response.records.map(airplane => ({
+          value: airplane.id,
+          label: airplane.airplaneName,
+          airplaneModel: airplane.airplaneModel,
+          seatNum: airplane.seatNum,
+          serviceYears: airplane.serviceYears
         }))
       : response.records.map(route => ({
           value: route.id,
@@ -548,17 +548,17 @@ const loadMoreData = async (type) => {
         }))
 
     // 避免重复项
-    const existingData = isTrain ? searchTrains.value : searchRoutes.value
+    const existingData = isAirplane ? searchAirplanes.value : searchRoutes.value
     const existingValues = new Set(existingData.map(item => item.value))
     const filteredNewOptions = newOptions.filter(item => !existingValues.has(item.value))
 
-    if (isTrain) {
-      searchTrains.value = [...searchTrains.value, ...filteredNewOptions]
+    if (isAirplane) {
+      searchAirplanes.value = [...searchAirplanes.value, ...filteredNewOptions]
     } else {
       searchRoutes.value = [...searchRoutes.value, ...filteredNewOptions]
     }
   } catch (error) {
-    ElMessage.error(`加载更多${isTrain ? '列车' : '线路'}失败`)
+    ElMessage.error(`加载更多${isAirplane ? '列车' : '线路'}失败`)
   } finally {
     isLoadingMore.value = false
   }
@@ -566,7 +566,7 @@ const loadMoreData = async (type) => {
 
 /**
  * 为Select组件添加滚动事件监听的方法
- * @param {string} type - 类型：'train' 或 'route'
+ * @param {string} type - 类型：'airplane' 或 'route'
  */
 const addScrollListener = (type) => {
   // 使用setTimeout确保DOM已更新
@@ -703,7 +703,7 @@ const handleAdd = () => {
   // 重置表单数据
   scheduleForm.value = {
     id: '',
-    trainId: '',
+    airplaneId: '',
     routeId: '',
     conductor: '',
     availableTickets: 0,
@@ -712,9 +712,9 @@ const handleAdd = () => {
   }
 
   // 在弹窗打开时重置并添加滚动监听
-  trainCurrentPage.value = 1
+  airplaneCurrentPage.value = 1
   routeCurrentPage.value = 1
-  trainAllLoaded.value = false
+  airplaneAllLoaded.value = false
   routeAllLoaded.value = false
 }
 
@@ -762,7 +762,7 @@ const handleEdit = (row) => {
   // 复制数据到表单
   scheduleForm.value = {
     id: row.id,
-    trainId: row.trainId,
+    airplaneId: row.airplaneId,
     routeId: row.routeId,
     conductor: row.conductor,
     availableTickets: row.availableTickets,
@@ -771,9 +771,9 @@ const handleEdit = (row) => {
   }
 
   // 在编辑弹窗打开时重置并添加滚动监听
-  trainCurrentPage.value = 1
+  airplaneCurrentPage.value = 1
   routeCurrentPage.value = 1
-  trainAllLoaded.value = false
+  airplaneAllLoaded.value = false
   routeAllLoaded.value = false
 }
 
@@ -848,7 +848,7 @@ const handleDelete = async (row) => {
 // 组件挂载后加载数据
 onMounted(() => {
   fetchScheduleList()
-  fetchTrainOptions()
+  fetchAirplaneOptions()
   fetchRouteOptions()
 })
 </script>

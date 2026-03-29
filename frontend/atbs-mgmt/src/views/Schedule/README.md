@@ -56,7 +56,7 @@ Schedule/
 - `DELETE /schedule/delete/{id}` - 删除班次
 
 #### 下拉框数据接口
-- `GET /schedule/train-options` - 获取列车选项列表
+- `GET /schedule/airplane-options` - 获取列车选项列表
 - `GET /schedule/route-options` - 获取线路选项列表
 
 ## 数据模型
@@ -65,7 +65,7 @@ Schedule/
 ```sql
 CREATE TABLE `atbs_schedule` (
   `id` bigint NOT NULL COMMENT '班次号',
-  `train_id` bigint NOT NULL COMMENT '列车号',
+  `airplane_id` bigint NOT NULL COMMENT '列车号',
   `route_id` bigint NOT NULL COMMENT '线路号',
   `conductor` varchar(10) DEFAULT NULL COMMENT '列车长',
   `available_tickets` int NOT NULL COMMENT '余票',
@@ -108,7 +108,7 @@ CREATE TABLE `atbs_schedule` (
   v-model:visible="dialogVisible"
   :title="dialogTitle"
   :form-data="scheduleForm"
-  :train-options="trainOptions"
+  :airplane-options="airplaneOptions"
   :route-options="routeOptions"
   :is-edit="isEdit"
   @submit="handleSubmit"

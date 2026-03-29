@@ -1,20 +1,26 @@
-import { StringDecoder } from "node:string_decoder"
+// 员工相关类型定义
 
-// 员工登录表单数据结构
+/**
+ * 员工登录表单数据结构
+ */
 export interface LoginForm {
   username: string
   phone: string
   password: string
 }
 
-// 登录响应数据结构
+/**
+ * 登录响应数据结构
+ */
 export interface LoginResponse {
   token: string
   id: string
   username: string
 }
 
-// 当前员工信息数据结构
+/**
+ * 当前员工信息数据结构
+ */
 export interface EmployeeInfo {
   id: string
   username: string
@@ -25,7 +31,9 @@ export interface EmployeeInfo {
   permissionLevel: string
 }
 
-// 员工信息数据结构
+/**
+ * 员工信息数据结构
+ */
 export interface Employee {
   id: string
   username: string
@@ -33,11 +41,13 @@ export interface Employee {
   password: string
   phone: string
   affiliatedSite: string
-  permissionLevel: StringDecoder
+  permissionLevel: string
   status: number
 }
 
-// 员工列表数据结构
+/**
+ * 员工列表数据结构
+ */
 export interface EmployeeList {
   id: string
   username: string
@@ -52,11 +62,12 @@ export interface EmployeeList {
   status: number
 }
 
-// 重置员工密码表单数据结构
+/**
+ * 重置员工密码表单数据结构
+ */
 export interface ResetPasswordForm {
   id: string
   oldPwd: string
   newPwd: string
   confirmPwd: string
 }
-

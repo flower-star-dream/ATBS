@@ -3,139 +3,64 @@
     <div class="login-form">
       <div class="login-header">
         <div class="logo">
-          <!-- <img src="/vite.svg" alt="logo" /> -->
           <h2>火车订票系统 - 员工登录</h2>
         </div>
       </div>
 
-      <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form-content"
-        size="large"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="请输入员工账号/手机号"
-            prefix-icon="User"
-          />
-        </el-form-item>
+      <div class="oauth2-login">
+        <p class="login-desc">请使用统一认证平台登录</p>
+        <el-button
+          type="primary"
+          size="large"
+          style="width: 100%"
+          :loading="loading"
+          @click="handleOAuth2Login"
+        >
+          <el-icon class="login-icon"><User /></el-icon>
+          前往登录
+        </el-button>
+      </div>
 
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="请输入密码"
-            prefix-icon="Lock"
-            show-password
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            style="width: 100%"
-            :loading="loading"
-            @click="handleLogin"
-          >
-            登录
-          </el-button>
-        </el-form-item>
-      </el-form>
+      <div class="footer">
+        <p>© 2026 火车订票系统 - 版权所有</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+/**
+ * 登录页面
+ * @description 使用 OAuth2 授权码登录方式，统一认证
+ */
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
-import { useEmployeeStore } from '@/stores'
-import { md5ToHex } from '@/utils/md5'
-import { strToBase64 } from '@/utils/base64'
+import { User } from '@element-plus/icons-vue'
+import { useOAuth2Store } from '@/stores'
 
-const router = useRouter()
-const employeeStore = useEmployeeStore()
-
-const loginFormRef = ref<FormInstance>()
+const oauth2Store = useOAuth2Store()
 const loading = ref(false)
 
-const loginForm = reactive({
-  username: '',
-  phone: '',
-  password: ''
-})
+/**
+ * 处理 OAuth2 授权码登录
+ * 跳转到后端托管的登录页面
+ */
+const handleOAuth2Login = async () => {
+  try {
+    loading.value = true
 
-// 手机号验证规则
-const validatePhone = (rule: any, value: string, callback: any) => {
-  // 简单的手机号正则验证
-  const phoneRegex = /^1[3-9]\d{9}$/;
-  // 如果输入内容符合手机号格式，通过验证
-  if (value && phoneRegex.test(value)) {
-    callback();
-  } else {
-    // 如果不符合手机号格式，让用户名验证规则继续验证
-    callback(new Error('手机号格式不正确，请重新输入'));
+    // 构建回调地址
+    const redirectUri = `${window.location.origin}/oauth2/callback`
+
+    // 构建授权URL
+    const authorizeUrl = await oauth2Store.buildAuthorizeUrl(redirectUri)
+
+    // 跳转到后端登录页面
+    window.location.href = authorizeUrl
+  } catch (error: any) {
+    ElMessage.error(error?.message || '登录跳转失败')
+    loading.value = false
   }
-};
-
-// 员工账号验证规则
-  const validateEmployeename = (rule: any, value: string, callback: any) => {
-  // 简单的手机号正则验证
-  const phoneRegex = /^1[3-9]\d{9}$/;
-  // 如果输入内容符合手机号格式，不进行用户名验证
-  if (value && phoneRegex.test(value)) {
-    callback();
-  } else if (value && (value.length < 3 || value.length > 20)) {
-    callback(new Error('员工账号长度在 3 到 20 个字符'));
-  } else {
-    callback();
-  }
-};
-
-const loginRules: FormRules = {
-  username: [
-    { required: true, message: '请输入员工账号/手机号', trigger: 'blur' },
-    // 使用自定义验证规则，支持用户名或手机号格式
-    { validator: validateEmployeename || validatePhone, trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 5, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
-  ]
-}
-
-const handleLogin = async () => {
-  if (!loginFormRef.value) return
-
-  await loginFormRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true
-      try {
-        // 判断输入是否为手机号格式
-        const isPhone = /^1[3-9]\d{9}$/.test(loginForm.username)
-        // 根据输入类型构建不同的登录参数，只传递必要字段
-        const loginParams = {
-          password: md5ToHex(strToBase64(loginForm.password)),
-          // 如果是手机号，只传递phone字段；否则只传递username字段
-          ...(isPhone ? { phone: loginForm.username, username: ''} : { username: loginForm.username, phone: '' })
-        }
-        
-        await employeeStore.loginAction(loginParams)
-      ElMessage.success('登录成功')
-      router.push('/home')
-      } catch (error: any) {
-        ElMessage.error(error?.message || '登录失败')
-      } finally {
-        loading.value = false
-      }
-    }
-  })
 }
 </script>
 
@@ -167,12 +92,6 @@ const handleLogin = async () => {
   align-items: center;
 }
 
-.logo img {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 10px;
-}
-
 .logo h2 {
   color: #333;
   margin: 0;
@@ -180,7 +99,25 @@ const handleLogin = async () => {
   font-weight: 500;
 }
 
-.login-form-content {
-  width: 100%;
+.oauth2-login {
+  margin-bottom: 20px;
+}
+
+.login-desc {
+  text-align: center;
+  color: #666;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.login-icon {
+  margin-right: 8px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 24px;
+  color: #999;
+  font-size: 12px;
 }
 </style>

@@ -1,6 +1,5 @@
 package top.flowerstardream.atbs.auth.biz.service.impl;
 
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -25,26 +24,21 @@ import top.flowerstardream.atbs.auth.ao.res.*;
 import top.flowerstardream.atbs.auth.biz.mapper.AuthRoleMapper;
 import top.flowerstardream.atbs.auth.biz.mapper.AuthUserMapper;
 import top.flowerstardream.atbs.auth.biz.mapper.AuthUserRoleMapper;
-import top.flowerstardream.atbs.auth.biz.mapper.AuthUserSocialMapper;
 import top.flowerstardream.atbs.auth.biz.service.IAuthRoleService;
 import top.flowerstardream.atbs.auth.biz.service.IAuthUserService;
 import top.flowerstardream.atbs.auth.biz.service.IOAuth2Service;
 import top.flowerstardream.atbs.auth.bo.dto.AuthorizationCodeData;
 import top.flowerstardream.atbs.auth.bo.eo.AuthUserEO;
 import top.flowerstardream.atbs.auth.bo.eo.RoleEO;
-import top.flowerstardream.atbs.auth.bo.eo.UserRoleEO;
-import top.flowerstardream.atbs.auth.common.AuthRedisPrefixConstant;
 import top.flowerstardream.atbs.tools.constants.ClientType;
-import top.flowerstardream.atbs.tools.constants.JwtClaimsConstant;
 import top.flowerstardream.base.properties.JwtProperties;
 import top.flowerstardream.base.properties.JwtProperties.TokenConfig;
 import top.flowerstardream.base.properties.OAuth2ClientProperties;
 import top.flowerstardream.base.properties.OAuth2ClientProperties.ClientConfig;
 import top.flowerstardream.base.properties.BusSystemProperties;
-import top.flowerstardream.base.service.Impl.BaseServiceImpl;
-import top.flowerstardream.base.service.VerificationCodeService;
 import top.flowerstardream.base.state.BaseStatus;
 import top.flowerstardream.base.utils.JwtUtil;
+import top.flowerstardream.base.utils.RedisUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -62,6 +56,7 @@ import static top.flowerstardream.atbs.tools.constants.JwtClaimsConstant.CLIENT_
 import static top.flowerstardream.atbs.tools.constants.JwtClaimsConstant.OPERATOR_ID;
 import static top.flowerstardream.atbs.tools.constants.JwtClaimsConstant.OPERATOR_NAME;
 import static top.flowerstardream.atbs.tools.constants.JwtClaimsConstant.SCOPE;
+import static top.flowerstardream.atbs.tools.constants.RedisPrefixConstant.*;
 import static top.flowerstardream.base.constant.CommonConstant.*;
 import static top.flowerstardream.base.exception.BaseExceptionEnum.*;
 import static top.flowerstardream.base.exception.ExceptionEnum.*;
@@ -95,7 +90,7 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
     private PasswordEncoder passwordEncoder;
 
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private RedisUtils redisUtils;
 
     @Resource
     private JwtProperties jwtProperties;
@@ -153,8 +148,7 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
         int val = JwtUtil.verifyToken(claims, tokenConfig.getRefreshTime());
         if (val <= 0) {
             // 加入黑名单，TTL 为令牌剩余有效期
-            stringRedisTemplate.opsForValue().set(OAUTH2_BLACKLIST_PREFIX + token, "revoked", val, TimeUnit.SECONDS
-            );
+            redisUtils.set(OAUTH2_BLACKLIST_PREFIX + token, "revoked", val, TimeUnit.SECONDS);
         }
     }
 
@@ -346,31 +340,37 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
         String redirectUri = params.get(REDIRECT_URI);
         String codeVerifier = params.get(CODE_VERIFIER);
 
-        // 1. 校验客户端
-        ClientConfig client = validateClient(clientId, clientSecret);
-        if (!client.getGrantTypes().contains(AUTHORIZATION_CODE_GRANT_TYPE)) {
-            throw UNSUPPORTED_GRANT_TYPE.toException();
-        }
-
-        // 2. 获取并删除授权码（一次性）
+        // 1. 获取并删除授权码（一次性）
         String key = OAUTH2_CODE_PREFIX + code;
-        String codeDataJson = stringRedisTemplate.opsForValue().get(key);
+        String codeDataJson = redisUtils.get(key);
         if (codeDataJson == null) {
             throw INVALID_GRANT.toException();
         }
-        stringRedisTemplate.delete(key);
+        redisUtils.delete(key);
 
         AuthorizationCodeData codeData = JSON.parseObject(codeDataJson, AuthorizationCodeData.class);
 
-        // 3. 校验授权码信息
+        // 2. 校验授权码信息
         if (!codeData.getClientId().equals(clientId) ||
             !codeData.getRedirectUri().equals(redirectUri)) {
             throw INVALID_GRANT.toException();
         }
 
-        // 4. PKCE 验证（如有）
-        if (codeData.getCodeChallenge() != null) {
+        // 3. PKCE 验证或客户端密钥验证
+        boolean isPKCE = codeData.getCodeChallenge() != null;
+        if (isPKCE) {
+            // PKCE 流程：验证 code_verifier，不需要 client_secret
             verifyPKCE(codeVerifier, codeData.getCodeChallenge(), codeData.getCodeChallengeMethod());
+        } else {
+            // 非 PKCE 流程：验证 client_secret
+            validateClient(clientId, clientSecret);
+        }
+
+        // 4. 校验客户端授权类型
+        ClientConfig client = oAuth2ClientProperties.getClient(clientId)
+            .orElseThrow(INVALID_CLIENT::toException);
+        if (!client.getGrantTypes().contains(AUTHORIZATION_CODE_GRANT_TYPE)) {
+            throw UNSUPPORTED_GRANT_TYPE.toException();
         }
 
         // 5. 生成令牌
@@ -516,7 +516,7 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
             .createTime(LocalDateTime.now())
             .build();
 
-        stringRedisTemplate.opsForValue().set(
+        redisUtils.set(
             OAUTH2_CODE_PREFIX + authCode,
             JSON.toJSONString(codeData),
             AUTH_CODE_TTL_MINUTES,
@@ -552,8 +552,11 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
     }
 
     private TokenRES generateUserToken(Long userId, String clientId, String scope) {
+        log.info("生成用户令牌, userId: {}, clientId: {}, scope: {}", userId, clientId, scope);
         ClientType endpoint = getExtra(CLIENT_TYPE, ClientType.class);
+        log.debug("endpoint: {}", endpoint);
         TokenConfig tokenConfig = jwtProperties.getTokens().get(endpoint.getName());
+        log.debug("tokenConfig: {}", tokenConfig);
 
         // Access Token
         Map<String, Object> accessClaims = new HashMap<>();
@@ -567,25 +570,24 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
         accessClaims.put(CLIENT_TYPE, endpoint.getName());
         accessClaims.put(ROLES, getRoles(userId));
 
-        String accessToken = TOKEN_HEADER + JwtUtil.getToken(tokenConfig.getSecretKey(), tokenConfig.getTtl(), accessClaims);
+        String accessToken = JwtUtil.getToken(tokenConfig.getSecretKey(), tokenConfig.getAccessTokenTtl(), accessClaims);
 
         // Refresh Token（仅包含用户标识）
         Map<String, Object> refreshClaims = new HashMap<>();
         refreshClaims.put(SUB, userId.toString());
 
-        String refreshToken = TOKEN_HEADER + JwtUtil.getToken(tokenConfig.getSecretKey(), tokenConfig.getTtl(), refreshClaims);
+        String refreshToken = JwtUtil.getToken(tokenConfig.getSecretKey(), tokenConfig.getRefreshTime(), refreshClaims);
 
         // 保存token至redis
-        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
         String redisKey = USER_TOKEN_PREFIX + userId;
-        operations.set(redisKey, accessToken, tokenConfig.getRefreshTime(), TimeUnit.SECONDS);
-        operations.set(redisKey, refreshToken, tokenConfig.getRefreshTime(), TimeUnit.SECONDS);
+        redisUtils.set(redisKey, ACCESS_TOKEN_PREFIX + accessToken, tokenConfig.getRefreshTime(), TimeUnit.SECONDS);
+        redisUtils.set(redisKey, REFRESH_PREFIX + refreshToken, tokenConfig.getRefreshTime(), TimeUnit.SECONDS);
 
         return TokenRES.builder()
             .accessToken(accessToken)
             .refreshToken(refreshToken)
             .tokenType(BEARER)
-            .expiresIn(tokenConfig.getTtl())
+            .expiresIn(tokenConfig.getRefreshTime())
             .scope(scope)
             .build();
     }
@@ -634,7 +636,7 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
     }
 
     private boolean isTokenBlacklisted(String token) {
-        return stringRedisTemplate.hasKey(OAUTH2_BLACKLIST_PREFIX + token);
+        return redisUtils.hasKey(OAUTH2_BLACKLIST_PREFIX + token);
     }
 
     private List<String> getRoles(Long userId) {

@@ -5,8 +5,8 @@
       <div class="welcome-section">
         <div class="welcome-content">
           <h1 class="welcome-title">
-            <span class="icon-train">🚄</span>
-            欢迎使用火车订票后台管理系统
+            <span class="icon-airplane">🚄</span>
+            欢迎使用飞机订票后台管理系统
           </h1>
           <p class="welcome-subtitle">高效管理票务，为用户提供优质出行体验</p>
           <div class="user-info" v-if="userInfo">
@@ -28,7 +28,7 @@
             <div class="action-icon">👥</div>
             <div class="action-text">员工管理</div>
           </div>
-          <div class="action-card" @click="navigateTo('/train/list')">
+          <div class="action-card" @click="navigateTo('/airplane/list')">
             <div class="action-icon">🚆</div>
             <div class="action-text">车次管理</div>
           </div>
@@ -130,7 +130,7 @@ onMounted(() => {
   margin: 0;
 }
 
-.icon-train {
+.icon-airplane {
   font-size: 36px;
 }
 

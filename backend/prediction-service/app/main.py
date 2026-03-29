@@ -6,18 +6,13 @@
 import os
 import sys
 import logging
+import time
+import traceback
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi_offline import FastAPIOffline
-
-# 使用本地 Swagger UI（避免 CDN 问题）
-try:
-    FastAPIClass = FastAPIOffline
-except ImportError:
-    FastAPIClass = FastAPI
 
 # 添加项目路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -69,7 +64,25 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         """全局异常处理"""
-        logger.exception(f"请求处理异常: {request.url.path}")
+        path = request.url.path
+        error_msg = str(exc)
+        error_trace = traceback.format_exc()
+
+        logger.error(f"[GlobalException] Path: {path}")
+        logger.error(f"[GlobalException] Error: {error_msg}")
+        logger.error(f"[GlobalException] Traceback:\n{error_trace}")
+
+        # 对于 openapi 请求，返回更多调试信息
+        if "/v3/api-docs" in path or "/openapi" in path:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": "Internal Server Error",
+                    "message": error_msg,
+                    "path": path
+                }
+            )
+
         return JSONResponse(
             status_code=200,
             content=Result.error(
@@ -116,12 +129,15 @@ async def lifespan(app: FastAPI):
 
 # 创建 FastAPI 应用
 # 开发环境启用文档，生产环境禁用
+# 配置与 Java 微服务保持一致：/v3/api-docs 和 /doc.html
 if settings.app_env == "development":
-    # FastAPIOffline 使用本地静态文件，避免 CDN 问题
-    app = FastAPIClass(
+    app = FastAPI(
         title=settings.app_name,
         description=settings.app_description,
         version=settings.app_version,
+        docs_url="/doc.html",  # 与 Java 服务保持一致
+        redoc_url=None,  # 禁用 ReDoc
+        openapi_url="/v3/api-docs",  # 与 Java SpringDoc 保持一致
         lifespan=lifespan
     )
 else:
@@ -138,6 +154,36 @@ else:
 
 # 注册异常处理器
 register_exception_handlers(app)
+
+# 添加请求日志中间件
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    """记录所有请求和响应"""
+    start_time = time.time()
+    path = request.url.path
+    method = request.method
+    client = request.client.host if request.client else "unknown"
+
+    # 详细记录请求信息（用于诊断网关问题）
+    headers = dict(request.headers)
+    # 移除敏感信息
+    headers.pop('authorization', None)
+    headers.pop('cookie', None)
+
+    logger.info(f"[Request] {method} {path} - Client: {client}")
+    logger.debug(f"[Request Headers] {headers}")
+    logger.debug(f"[Request Query] {request.query_params}")
+
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+        logger.info(f"[Response] {method} {path} - Status: {response.status_code} - Duration: {duration:.3f}s")
+        return response
+    except Exception as exc:
+        duration = time.time() - start_time
+        logger.error(f"[Error] {method} {path} - Duration: {duration:.3f}s - Error: {str(exc)}")
+        logger.error(f"[Error] Traceback: {traceback.format_exc()}")
+        raise
 
 # 添加 TraceId 中间件
 app.add_middleware(TraceIdMiddleware)
@@ -162,7 +208,7 @@ async def root():
         "name": settings.app_name,
         "version": settings.app_version,
         "description": settings.app_description,
-        "docs": "/docs"
+        "docs": "/doc.html"
     })
 
 

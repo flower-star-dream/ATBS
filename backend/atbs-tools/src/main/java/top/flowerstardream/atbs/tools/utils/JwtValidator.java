@@ -5,13 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import top.flowerstardream.atbs.tools.constants.ClientType;
 import top.flowerstardream.atbs.tools.constants.JwtClaimsConstant;
 import top.flowerstardream.base.properties.JwtProperties;
 import top.flowerstardream.base.utils.JwtUtil;
+import top.flowerstardream.base.utils.RedisUtils;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static top.flowerstardream.atbs.tools.constants.RedisPrefixConstant.ACCESS_TOKEN_PREFIX;
 import static top.flowerstardream.atbs.tools.constants.RedisPrefixConstant.USER_TOKEN_PREFIX;
 import static top.flowerstardream.base.constant.CommonConstant.*;
 
@@ -38,7 +39,7 @@ public class JwtValidator {
     public ValidateResult validate(String tokenHeader,
                                    Integer clientTypeHeader,
                                    JwtProperties prop,
-                                   StringRedisTemplate redis) {
+                                   RedisUtils redis) {
         // 1. 提取并校验 token
         if (isBlank(tokenHeader)) {
             return ValidateResult.builder().valid(false).msg("未认证").build();
@@ -86,9 +87,20 @@ public class JwtValidator {
 
         // 5. Redis 存在性
         String redisKey = USER_TOKEN_PREFIX + userId;
-        String redisToken = redis.opsForValue().get(redisKey);
+        String redisToken;
+        try {
+            redisToken = redis.get(redisKey);
+        } catch (Exception e) {
+            log.error("Redis查询Token失败 - userId: {}, error: {}", userId, e.getMessage());
+            return ValidateResult.builder().valid(false).msg("系统繁忙，请稍后重试").build();
+        }
         if (isBlank(redisToken)) {
             return ValidateResult.builder().valid(false).msg("Token未找到").build();
+        } else {
+            redisToken = redisToken.substring(ACCESS_TOKEN_PREFIX.length());
+            if (!redisToken.equals(rawToken)) {
+                return ValidateResult.builder().valid(false).msg("Token已过期").build();
+            }
         }
 
         return ValidateResult.builder().valid(true).clientType(clientType).userId(userId).username(username).token(rawToken).build();

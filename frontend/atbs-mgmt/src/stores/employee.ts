@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { LoginForm, EmployeeInfo } from '@/types/employee'
+import type { LoginForm, EmployeeInfo } from '@/types'
 import { login } from '@/api/employee'
 
 export const useEmployeeStore = defineStore('employee', () => {

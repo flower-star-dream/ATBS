@@ -1,6 +1,7 @@
 package top.flowerstardream.atbs.tools.interfaces;
 
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +48,7 @@ public class TtlContextInterceptor implements HandlerInterceptor {
                              Object handler) {
         // 1. 创建TTL上下文, 设置traceId
         RequestContext ctx = new RequestContext();
+        String path = request.getRequestURI();
         String traceId = request.getHeader(OPERATOR_ID);
         log.info("【TTL拦截器】traceId: {}", traceId);
         if (traceId == null) {
@@ -55,9 +57,24 @@ public class TtlContextInterceptor implements HandlerInterceptor {
         }
         ctx.setTraceId(traceId);
         MDC.put("traceId", traceId);
+
         // 2. 获取业务端，判断是否OpenFeign调用，是则直接放行
-        int clientTypeHeader = Integer.parseInt(request.getHeader(CLIENT_TYPE));
+        log.info("【TTL拦截器】获取业务端");
+        String clientTypeHeaderStr = request.getHeader(CLIENT_TYPE);
+        if (StrUtil.isEmpty(clientTypeHeaderStr)) {
+            // 提前跳过白名单
+            if (WhiteListUtil.shouldSkip(path, myGatewayProperties.getWhiteList())
+                    || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                log.info("【TTL拦截器】白名单跳过");
+                TtlContextHolder.set(ctx);
+                return true;
+            }
+            log.error("【TTL拦截器】业务端为空");
+            return false;
+        }
+        int clientTypeHeader = Integer.parseInt(clientTypeHeaderStr);
         ClientType clientType = ClientType.fromCode(clientTypeHeader);
+        log.info("【TTL拦截器】业务端: {}", clientType);
         Map<String, Object> extraData = new HashMap<>();
         extraData.put(JwtClaimsConstant.CLIENT_TYPE, clientType);
         ctx.setExtraData(extraData);
@@ -75,9 +92,9 @@ public class TtlContextInterceptor implements HandlerInterceptor {
         }
 
         // 3. 跳过白名单
-        String path = request.getRequestURI();
         if (WhiteListUtil.shouldSkip(path, myGatewayProperties.getWhiteList())
                 || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.info("【TTL拦截器】白名单跳过");
             TtlContextHolder.set(ctx);
             return true;
         }

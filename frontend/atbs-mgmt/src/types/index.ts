@@ -1,4 +1,3 @@
-
 // 分页相关类型
 export interface PageQuery {
   page: number
@@ -13,9 +12,9 @@ export interface PageResult<T> {
 }
 
 export interface StatusCount {
-  status: number // 0, 1, 2, ... 表示不同的状态
-  count: number // 该状态的数量
-  description: string // 状态描述
+  status: number
+  count: number
+  description: string
 }
 
 // API响应类型
@@ -31,8 +30,9 @@ export interface StartOrStopForm {
   status: number
 }
 
+// 从各个类型定义文件重新导出
 export * from './employee'
-export * from './train'
+export * from './airplane'
 export * from './user'
 export * from './passenger'
 export * from './order'
@@ -42,3 +42,5 @@ export * from './seat-reservation'
 export * from './route'
 export * from './station'
 export * from './route-station'
+export * from './client'
+export * from './oauth2'

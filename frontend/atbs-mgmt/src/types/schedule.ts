@@ -1,87 +1,103 @@
-// 班次相关类型定义
+// 航班相关类型定义
 import type { PageQuery } from './index'
 
 /**
- * 班次基础类型（对应atbs_schedule表）
+ * 航班基础类型（对应atbs_flight表）
  */
-export interface Schedule {
-  id: number                    // 班次号（bigint）
-  trainId: number              // 列车号（bigint）- 外键关联atbs_train
-  routeId: number              // 线路号（bigint）- 外键关联atbs_route
-  conductor: string            // 列车长（varchar(10)）
-  availableTickets: number     // 余票（int）
-  startTime: string            // 出发时间（datetime）
-  endTime: string              // 结束时间（datetime）
-  createTime?: string          // 创建时间
-  updateTime?: string          // 更新时间
-  createPerson?: string        // 创建人
-  updatePerson?: string        // 更新者
+export interface Flight {
+  id: number
+  aircraftId: number
+  routeId: number
+  captain: string
+  availableTickets: number
+  startTime: string
+  endTime: string
+  createTime?: string
+  updateTime?: string
+  createPerson?: string
+  updatePerson?: string
 }
 
 /**
- * 班次列表类型（包含分页信息）
+ * 航班列表类型（包含分页信息）
  */
-export interface ScheduleList extends Schedule {
-  // 继承Schedule的所有属性
-  trainName?: string           // 列车名称
-  routeName?: string           // 线路名称
-  routeInfo?: string           // 线路信息（出发站-到达站）
+export interface FlightList extends Flight {
+  aircraftName?: string
+  routeName?: string
+  routeInfo?: string
 }
 
 /**
- * 班次查询参数类型
+ * 航班查询参数类型
  */
-export interface ScheduleQuery extends PageQuery {
-  trainId?: number            // 列车ID
-  routeId?: number            // 线路ID
-  conductor?: string          // 列车长（模糊查询）
-  startTimeStart?: string     // 出发时间开始
-  startTimeEnd?: string       // 出发时间结束
-  availableTicketsMin?: number // 最小余票数
-  availableTicketsMax?: number // 最大余票数
+export interface FlightQuery extends PageQuery {
+  aircraftId?: number
+  routeId?: number
+  captain?: string
+  startTimeStart?: string
+  startTimeEnd?: string
+  availableTicketsMin?: number
+  availableTicketsMax?: number
 }
-export interface RealTimeSchedulePageQueryREQ extends PageQuery {
+
+export interface RealTimeFlightPageQueryREQ extends PageQuery {
   nowTime?: string
   startStationId?: string
   endStationId?: string
 }
 
-export interface RealTimeScheduleRES extends Schedule {
-  
+export interface RealTimeFlightRES extends Flight {
+
 }
 
 /**
- * 班次表单数据类型（用于新增/编辑）
+ * 航班表单数据类型（用于新增/编辑）
  */
-export interface ScheduleForm {
-  id?: number                  // 班次号（编辑时必填）
-  trainId: number             // 列车号
-  routeId: number             // 线路号
-  conductor: string           // 列车长
-  availableTickets: number    // 余票
-  startTime: string           // 出发时间
-  endTime: string             // 结束时间
-  createPerson?: string       // 创建人
-  updatePerson?: string       // 更新者
+export interface FlightForm {
+  id?: number
+  aircraftId: number
+  routeId: number
+  captain: string
+  availableTickets: number
+  startTime: string
+  endTime: string
+  createPerson?: string
+  updatePerson?: string
 }
 
 /**
- * 列车选择项类型（用于下拉框）
+ * 飞机选择项类型（用于下拉框）
  */
-export interface TrainOption {
-  value: number               // 列车ID
-  label: string               // 列车名称
-  trainModel?: string         // 列车型号
-  seatNum?: number            // 座位数
+export interface AircraftOption {
+  value: number
+  label: string
+  aircraftModel?: string
+  seatNum?: number
 }
 
 /**
- * 线路选择项类型（用于下拉框）
+ * 航线选择项类型（用于下拉框）
  */
 export interface RouteOption {
-  value: number               // 线路ID
-  label: string               // 线路名称
-  departureStation?: string   // 出发站
-  arrivalStation?: string     // 到达站
-  distance?: number           // 距离
+  value: number
+  label: string
+  departureStation?: string
+  arrivalStation?: string
+  distance?: number
 }
+
+// 为了保持向后兼容，保留Schedule相关的类型别名
+/** @deprecated 请使用Flight替代 */
+export type Schedule = Flight
+/** @deprecated 请使用FlightList替代 */
+export type ScheduleList = FlightList
+/** @deprecated 请使用FlightQuery替代 */
+export type ScheduleQuery = FlightQuery
+/** @deprecated 请使用FlightForm替代 */
+export type ScheduleForm = FlightForm
+/** @deprecated 请使用RealTimeFlightPageQueryREQ替代 */
+export type RealTimeSchedulePageQueryREQ = RealTimeFlightPageQueryREQ
+/** @deprecated 请使用RealTimeFlightRES替代 */
+export type RealTimeScheduleRES = RealTimeFlightRES
+/** @deprecated 请使用AircraftOption替代 */
+export type AirplaneOption = AircraftOption

@@ -60,7 +60,7 @@ public class AuthRoleServiceImpl extends ServiceImpl<AuthRoleMapper, RoleEO> imp
             return Collections.emptyList();
         }
         LambdaQueryWrapper<RoleEO> roleWrapper = new LambdaQueryWrapper<>();
-        roleWrapper.in(RoleEO::getId, userRoles.stream().map(UserRoleEO::getRoleId));
+        roleWrapper.in(RoleEO::getId, userRoles.stream().map(UserRoleEO::getRoleId).toList());
         return authRoleMapper.selectList(roleWrapper);
     }
 

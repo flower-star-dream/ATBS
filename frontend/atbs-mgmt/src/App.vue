@@ -8,7 +8,7 @@
 import { onMounted } from 'vue'
 
 onMounted(() => {
-  console.log('火车订票系统后台管理系统已启动')
+  console.log('飞机订票系统后台管理系统已启动')
 })
 </script>
 

@@ -772,7 +772,7 @@ const handleStatusChange = async (row) => {
   
   try {
     await ElMessageBox.confirm(
-      `确定要取消车票「${row.trainNumber} - ${row.seatNumber}」吗？`,
+      `确定要取消车票「${row.airplaneNumber} - ${row.seatNumber}」吗？`,
       '操作确认',
       {
         confirmButtonText: '确定',

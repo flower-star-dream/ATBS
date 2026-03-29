@@ -28,25 +28,25 @@ export const useAppStore = defineStore('app', () => {
       children: [
         {
           path: '/schedule',
-          title: '班次管理',
+          title: '航班管理',
           icon: 'ScheduleIcon',
           children: [
             {
               path: '/schedule/list',
-              title: '班次列表',
+              title: '航班列表',
               icon: 'ScheduleIcon'
             }
           ]
         },
         {
-          path: '/train',
-          title: '列车管理',
-          icon: 'TrainIcon',
+          path: '/airplane',
+          title: '飞机管理',
+          icon: 'AirplaneIcon',
           children: [
             {
-              path: '/train/list',
-              title: '列车列表',
-              icon: 'TrainIcon'
+              path: '/airplane/list',
+              title: '飞机列表',
+              icon: 'AirplaneIcon'
             }
           ]
         },
@@ -64,24 +64,24 @@ export const useAppStore = defineStore('app', () => {
         },
         {
           path: '/route',
-          title: '线路管理',
+          title: '航线管理',
           icon: 'RouteIcon',
           children: [
             {
               path: '/route/list',
-              title: '线路列表',
+              title: '航线列表',
               icon: 'RouteIcon'
             }
           ]
         },
         {
           path: '/station',
-          title: '站点管理',
+          title: '机场管理',
           icon: 'Location',
           children: [
             {
               path: '/station/list',
-              title: '站点列表',
+              title: '机场列表',
               icon: 'Location'
             }
           ]
@@ -100,7 +100,7 @@ export const useAppStore = defineStore('app', () => {
           children: [
             {
               path: '/ticket/list',
-              title: '车票列表',
+              title: '机票列表',
               icon: 'Ticket'
             }
           ]
@@ -160,12 +160,12 @@ export const useAppStore = defineStore('app', () => {
         },
         {
           path: '/passenger',
-          title: '乘车人管理',
+          title: '乘机人管理',
           icon: 'PassengerIcon',
           children: [
             {
               path: '/passenger/list',
-              title: '乘车人列表',
+              title: '乘机人列表',
               icon: 'PassengerIcon'
             }
           ]

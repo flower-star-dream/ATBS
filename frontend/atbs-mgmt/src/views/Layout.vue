@@ -5,7 +5,7 @@
         <div class="sidebar-header">
           <div class="logo">
             <img :src="logoUrl" alt="logo" />
-            <span v-if="!sidebarCollapsed">火车订票系统</span>
+            <span v-if="!sidebarCollapsed">飞机订票系统</span>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ import { useEmployeeStore } from '@/stores/employee'
 import { useAppStore } from '@/stores/app'
 import { ossUrl } from '@/stores'
 import { getEmployeeInfoService } from '@/api/employee'
-import type { EmployeeInfo } from '@/types/employee'
+import type { EmployeeInfo } from '@/types'
 
 const router = useRouter()
 const employeeStore = useEmployeeStore()

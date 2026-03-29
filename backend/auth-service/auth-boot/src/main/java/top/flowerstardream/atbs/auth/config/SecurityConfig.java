@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import top.flowerstardream.atbs.auth.filter.AuthenticationFilter;
+import top.flowerstardream.base.properties.MyGatewayProperties;
 
 /**
  * Spring Security配置类
@@ -30,19 +31,25 @@ public class SecurityConfig {
     @Resource
     private AuthenticationFilter authenticationFilter;
 
+    @Resource
+    private MyGatewayProperties myGatewayProperties;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // 登录页面和回调页面（必须放在最前面）
+                .requestMatchers("/login").permitAll()
+                .requestMatchers("/oauth/callback").permitAll()
                 // OAuth2公开端点
                 .requestMatchers("/oauth/*").permitAll()
-                .requestMatchers("/api/*/v1/auth/sms/send").permitAll()
-                .requestMatchers(".well-known/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/oauth2/**").permitAll()
+                .requestMatchers("/.well-known/**").permitAll()
                 // 内部端点需限制
                 .requestMatchers("/oauth2/introspect").permitAll()
+                .requestMatchers(myGatewayProperties.getWhiteList().toArray(new String[0])).permitAll()
                 // 其余需认证
                 .anyRequest().authenticated())
         .formLogin(AbstractHttpConfigurer::disable)

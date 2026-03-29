@@ -36,7 +36,7 @@
         </el-select>
         <div v-if="selectedSchedule" class="schedule-detail">
           <el-descriptions :column="2" size="small" border>
-            <el-descriptions-item label="列车">{{ selectedSchedule.trainName }}</el-descriptions-item>
+            <el-descriptions-item label="列车">{{ selectedSchedule.airplaneName }}</el-descriptions-item>
             <el-descriptions-item label="线路">{{ selectedSchedule.routeInfo }}</el-descriptions-item>
             <el-descriptions-item label="出发时间">{{ selectedSchedule.departureTime }}</el-descriptions-item>
             <el-descriptions-item label="到达时间">{{ selectedSchedule.arrivalTime }}</el-descriptions-item>
@@ -165,7 +165,7 @@ import {
   BOOKING_STATUS_LABELS, 
   BOOKING_STATUS_TYPES,
   BookingStatus 
-} from '@/types/seat-reservation'
+} from '@/types'
 import { formatDate } from '@/utils/formatDate'
 
 // Props定义
@@ -292,7 +292,7 @@ const fetchScheduleOptions = async () => {
     scheduleOptions.value = options.map(item => ({
       value: item.value,
       label: item.label,
-      trainName: item.trainName,
+      airplaneName: item.airplaneName,
       routeInfo: item.routeInfo,
       departureTime: item.departureTime,
       arrivalTime: item.arrivalTime,

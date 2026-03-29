@@ -7,7 +7,7 @@ from app.core.config import settings
 
 if __name__ == "__main__":
     print(f"启动 {settings.app_name}...")
-    print(f"访问文档: http://{settings.host}:{settings.port}/docs")
+    print(f"访问文档: http://{settings.host}:{settings.port}/doc.html")
 
     uvicorn.run(
         "app.main:app",

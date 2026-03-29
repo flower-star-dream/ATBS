@@ -93,7 +93,10 @@ WHITE_LIST_PATHS = [
     "/docs",
     "/redoc",
     "/openapi.json",
-    "/api/v1/prediction/health",
+    "/doc.html",                    # Swagger UI 页面
+    "/v3/api-docs",                 # OpenAPI JSON 规范
+    "/prediction-service",          # 网关转发路径前缀
+    "/api/mgmt/v1/prediction/health",
 ]
 
 

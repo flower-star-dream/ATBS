@@ -1,4 +1,4 @@
-import type { Config } from './types'
+import type { Config, OAuth2Config } from './types'
 import { getEnv } from './env'
 
 /**
@@ -13,27 +13,52 @@ const env = getEnv()
 const serviceConfig = {
   // 开发环境服务配置 - 路径为空，由gateway处理路由
   development: {
+    auth: '',
     user: '',
-    trainSeat: '',
-    ticket: '',
+    airplane: '',
     order: '',
-    system: ''
+    prediction: ''
   },
   // 测试环境服务配置 - 路径为空，由gateway处理路由
   staging: {
+    auth: '',
     user: '',
-    trainSeat: '',
-    ticket: '',
+    airplane: '',
     order: '',
-    system: ''
+    prediction: ''
   },
   // 生产环境服务配置 - 路径为空，由gateway处理路由
   production: {
+    auth: '',
     user: '',
-    trainSeat: '',
-    ticket: '',
+    airplane: '',
     order: '',
-    system: ''
+    prediction: ''
+  }
+}
+
+// OAuth2 配置常量
+const oauth2Config: Record<string, OAuth2Config> = {
+  // 开发环境 OAuth2 配置
+  development: {
+    authBaseUrl: 'http://localhost:8080',
+    clientId: 'mgmt-client',
+    clientSecret: 'mgmt-secret',
+    scope: 'openid profile read write'
+  },
+  // 测试环境 OAuth2 配置
+  staging: {
+    authBaseUrl: 'https://atbs.flower-star-dream.top',
+    clientId: 'mgmt-client',
+    clientSecret: 'mgmt-secret',
+    scope: 'openid profile read write'
+  },
+  // 生产环境 OAuth2 配置
+  production: {
+    authBaseUrl: 'https://atbs.flower-star-dream.top',
+    clientId: 'mgmt-client',
+    clientSecret: 'mgmt-secret',
+    scope: 'openid profile read write'
   }
 }
 
@@ -44,12 +69,13 @@ const serviceConfig = {
 const defaultConfig: Config = {
   baseUrl: 'http://localhost:8080',
   ossUrl: 'http://localhost:9000/atbs',
-  apiPrefix: '/api/v1/mgmt',
+  apiPrefix: '/api/mgmt/v1',
   timeout: 10000,
   mock: false,
   debug: true,
-  title: '火车订票系统-后端管理',
-  services: serviceConfig.development
+  title: '飞机订票系统-后端管理',
+  services: serviceConfig.development,
+  oauth2: oauth2Config.development
 }
 
 /**
@@ -59,20 +85,22 @@ const defaultConfig: Config = {
 const envConfigs: Record<string, Partial<Config>> = {
   // 开发环境特定配置
   development: {
-    title: '火车订票系统-后端管理 - 开发环境',
-    services: serviceConfig.development
+    title: '飞机订票系统-后端管理 - 开发环境',
+    services: serviceConfig.development,
+    oauth2: oauth2Config.development
   },
-  
+
   // 测试环境特定配置
   staging: {
     baseUrl: 'https://atbs.flower-star-dream.top',
     ossUrl: 'https://atbs.flower-star-dream.top/atbs',
     mock: false,
     debug: true,
-    title: '火车订票系统-后端管理 - 测试环境',
-    services: serviceConfig.staging
+    title: '飞机订票系统-后端管理 - 测试环境',
+    services: serviceConfig.staging,
+    oauth2: oauth2Config.staging
   },
-  
+
   // 生产环境特定配置
   production: {
     baseUrl: 'https://atbs.flower-star-dream.top',
@@ -80,7 +108,8 @@ const envConfigs: Record<string, Partial<Config>> = {
     timeout: 30000,
     mock: false,
     debug: false,
-    services: serviceConfig.production
+    services: serviceConfig.production,
+    oauth2: oauth2Config.production
   }
 }
 

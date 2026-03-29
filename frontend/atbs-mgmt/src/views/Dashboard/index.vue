@@ -2,7 +2,7 @@
   <div class="dashboard">
     <div class="dashboard-header">
       <h1>仪表盘</h1>
-      <p>欢迎来到火车订票系统员工管理</p>
+      <p>欢迎来到飞机订票系统员工管理</p>
     </div>
 
     <div class="dashboard-stats">
@@ -27,11 +27,11 @@
             <div class="stat-content">
               <div class="stat-icon">
                 <el-icon size="40" color="#67C23A">
-                  <Train />
+                  <Airplane />
                 </el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-number">{{ stats.trainCount }}</div>
+                <div class="stat-number">{{ stats.airplaneCount }}</div>
                 <div class="stat-label">车次总数</div>
               </div>
             </div>
@@ -106,7 +106,7 @@ import { reactive, onMounted } from 'vue'
 
 const stats = reactive({
   employeeCount: 1234,
-  trainCount: 567,
+  airplaneCount: 567,
   orderCount: 8901,
   stationCount: 234
 })

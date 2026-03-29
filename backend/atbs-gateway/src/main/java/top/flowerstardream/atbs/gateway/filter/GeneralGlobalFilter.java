@@ -18,7 +18,9 @@ import top.flowerstardream.atbs.tools.utils.JwtValidator;
 import top.flowerstardream.base.properties.JwtProperties;
 import top.flowerstardream.base.properties.MyGatewayProperties;
 import top.flowerstardream.base.result.Result;
+import top.flowerstardream.base.utils.RedisUtils;
 import top.flowerstardream.base.utils.ResponseWriter;
+import top.flowerstardream.base.utils.WhiteListUtil;
 
 import java.util.Objects;
 
@@ -40,7 +42,7 @@ public class GeneralGlobalFilter implements GlobalFilter {
     private JwtProperties jwtProperties;
     
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private RedisUtils redisUtils;
 
     @Resource
     private MyGatewayProperties myGatewayProperties;
@@ -77,7 +79,7 @@ public class GeneralGlobalFilter implements GlobalFilter {
                 authHeader,
                 clientTypeHeader,
                 jwtProperties,
-                stringRedisTemplate);
+                redisUtils);
 
         log.info("【网关】JWT校验完成 - valid={}, msg={}", vr.isValid(), vr.getMsg());
 
@@ -108,6 +110,8 @@ public class GeneralGlobalFilter implements GlobalFilter {
      * @return boolean
      */
     private boolean isWhiteList(String path) {
-        return myGatewayProperties.getWhiteList().stream().anyMatch(path::startsWith);
+        log.debug("【网关】开始检查白名单 - path={}", path);
+        log.debug("【网关】白名单列表 - {}", WhiteListUtil.shouldSkip(path, myGatewayProperties.getWhiteList()));
+        return WhiteListUtil.shouldSkip(path, myGatewayProperties.getWhiteList());
     }
 }

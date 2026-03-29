@@ -96,9 +96,9 @@ public class OAuth2Controller {
         return switch (grantType) {
             case AUTHORIZATION_CODE_GRANT_TYPE -> oauth2Service.authorizationCodeGrant(request);
             case PASSWORD_GRANT_TYPE -> oauth2Service.passwordGrant(request);
+            case WECHAT_MINI_GRANT_TYPE -> oauth2Service.wechatMiniGrant(request);
             case CLIENT_CREDENTIALS_GRANT_TYPE -> oauth2Service.clientCredentialsGrant(request);
             case REFRESH_TOKEN_GRANT_TYPE -> oauth2Service.refreshTokenGrant(request);
-            case WECHAT_MINI_GRANT_TYPE -> oauth2Service.wechatMiniGrant(request);
             default -> throw UNSUPPORTED_GRANT_TYPE.toException();
         };
     }

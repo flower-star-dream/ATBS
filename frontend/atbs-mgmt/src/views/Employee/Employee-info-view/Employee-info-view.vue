@@ -14,8 +14,8 @@
                             <Plus />
                         </el-icon>
                         <el-upload class="avatar-uploader" :show-file-list="false" :auto-upload="true"
-                            action="/api/v1/common/user/upload" name="file"
-                            :headers="{ 'Authorization': employeeStore.token, 'X-Biz-Side': 'admin' }"
+                            action="/api/mgmt/v1/common/user/upload" name="file"
+                            :headers="{ 'Authorization': employeeStore.token, 'X-Client-Type': 1 }"
                             :on-success="uploadSuccess" accept=".jpg,.jpeg,.png,.gif" :before-upload="beforeUpload">
                             <div class="avatar-upload-overlay">
                                 <el-icon class="upload-icon">

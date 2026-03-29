@@ -65,6 +65,10 @@
             <groupId>top.flowerstardream.base</groupId>
             <artifactId>flower-spring-cloud-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

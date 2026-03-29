@@ -175,6 +175,7 @@ def setup_logging(settings=None):
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("fastapi").setLevel(logging.WARNING)
     logging.getLogger("nacos").setLevel(logging.WARNING)
+    logging.getLogger("watchfiles").setLevel(logging.WARNING)  # 禁用热重载文件变更日志
 
     return logger
 

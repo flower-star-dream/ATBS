@@ -111,7 +111,7 @@
 
     <h4>车票信息</h4>
     <el-table :data="currentOrder.tickets" border style="width: 100%">
-      <el-table-column prop="trainNumber" label="车次号" width="100" />
+      <el-table-column prop="airplaneNumber" label="车次号" width="100" />
       <el-table-column prop="departure" label="出发站" width="100" />
       <el-table-column prop="arrival" label="到达站" width="100" />
       <el-table-column prop="departureTime" label="出发时间" width="160" />
@@ -149,7 +149,7 @@ import { getOrderListService, getOrderDetailService, updateOrderStatusService } 
 import { getTicketDetailByOrderIdService } from '@/api/ticket'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/formatDate'
-import { TicketStatus, TicketStatusMap } from '@/types/ticket'
+import { TicketStatus, TicketStatusMap } from '@/types'
 
 // 订单状态枚举常量
 const ORDER_STATUS = {
@@ -545,7 +545,7 @@ const handleViewDetail = async (row) => {
     // 处理ticket数据，映射字段名
     const formattedTickets = Array.isArray(ticketDetail) ? ticketDetail.map(ticket => ({
       ...ticket,
-      trainNumber: ticket.id, // 车次号使用id
+      airplaneNumber: ticket.id, // 车次号使用id
       departure: ticket.startStation,
       arrival: ticket.endStation,
       departureTime: formatDate(ticket.startTime),

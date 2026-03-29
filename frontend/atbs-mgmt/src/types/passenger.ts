@@ -1,7 +1,8 @@
-// 乘车人相关类型定义
-import { PageQuery } from './index'
+// 乘机人相关类型定义
+import type { PageQuery } from './index'
+
 /**
- * 乘车人基本信息
+ * 乘机人基本信息
  */
 export interface Passenger {
   id: string
@@ -15,7 +16,7 @@ export interface Passenger {
 }
 
 /**
- * 乘车人分页查询参数
+ * 乘机人分页查询参数
  */
 export interface PassengerPageQueryREQ extends PageQuery {
   realName?: string
