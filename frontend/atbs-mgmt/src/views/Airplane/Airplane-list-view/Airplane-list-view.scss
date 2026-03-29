@@ -1,0 +1,41 @@
+// 飞机列表页面样式
+
+.selected-count {
+  margin-left: 4px;
+  font-weight: bold;
+  color: #409eff;
+}
+
+// 自定义表格样式优化
+:deep(.el-table) {
+  .el-table__cell {
+    padding: 8px 0;
+  }
+}
+
+// 状态标签样式
+:deep(.el-tag) {
+  font-weight: 500;
+}
+
+// 操作按钮样式
+:deep(.el-button--text) {
+  padding: 0 8px;
+  margin: 0 2px;
+}
+
+// 响应式布局
+@media screen and (max-width: 768px) {
+  :deep(.el-table) {
+    font-size: 12px;
+    
+    .el-table__cell {
+      padding: 6px 0;
+    }
+  }
+  
+  :deep(.el-button) {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}
