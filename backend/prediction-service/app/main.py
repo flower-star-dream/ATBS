@@ -38,7 +38,7 @@ def register_exception_handlers(app: FastAPI):
     async def business_exception_handler(request: Request, exc: BusinessException):
         """业务异常处理"""
         return JSONResponse(
-            status_code=200,
+            status_code=exc.error_code.code,
             content=Result(
                 code=exc.error_code.code,
                 message=exc.message
@@ -49,7 +49,7 @@ def register_exception_handlers(app: FastAPI):
     async def unauthorized_exception_handler(request: Request, exc):
         """未授权异常处理"""
         return JSONResponse(
-            status_code=200,
+            status_code=401,
             content=Result.unauthorized().model_dump()
         )
 
@@ -57,7 +57,7 @@ def register_exception_handlers(app: FastAPI):
     async def forbidden_exception_handler(request: Request, exc):
         """无权限异常处理"""
         return JSONResponse(
-            status_code=200,
+            status_code=403,
             content=Result.forbidden().model_dump()
         )
 
@@ -84,7 +84,7 @@ def register_exception_handlers(app: FastAPI):
             )
 
         return JSONResponse(
-            status_code=200,
+            status_code=500,
             content=Result.error(
                 message="服务器内部错误",
                 code=ErrorCode.INTERNAL_SERVER_ERROR.code
@@ -127,6 +127,11 @@ async def lifespan(app: FastAPI):
         await close_nacos()
 
 
+# FastAPI 应用配置常量
+# 请求体大小限制：10MB
+MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024
+
+
 # 创建 FastAPI 应用
 # 开发环境启用文档，生产环境禁用
 # 配置与 Java 微服务保持一致：/v3/api-docs 和 /doc.html
@@ -154,6 +159,27 @@ else:
 
 # 注册异常处理器
 register_exception_handlers(app)
+
+# 添加请求体大小限制中间件
+@app.middleware("http")
+async def request_size_limit_middleware(request: Request, call_next):
+    """限制请求体大小，防止内存耗尽攻击"""
+    # 检查 Content-Length 头
+    content_length = request.headers.get('content-length')
+    if content_length:
+        try:
+            size = int(content_length)
+            if size > MAX_REQUEST_BODY_SIZE:
+                logger.warning(f"请求体过大: {size} bytes，限制: {MAX_REQUEST_BODY_SIZE} bytes")
+                return JSONResponse(
+                    status_code=413,
+                    content={"code": 413, "message": "请求体过大，最大允许 10MB", "data": None}
+                )
+        except ValueError:
+            pass
+
+    return await call_next(request)
+
 
 # 添加请求日志中间件
 @app.middleware("http")
@@ -188,13 +214,15 @@ async def request_logging_middleware(request: Request, call_next):
 # 添加 TraceId 中间件
 app.add_middleware(TraceIdMiddleware)
 
-# 配置 CORS
+# 配置 CORS - 从配置类读取跨域配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_allow_origins,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
+    expose_headers=settings.cors_expose_headers,
+    allow_credentials=settings.cors_allow_credentials,
+    max_age=settings.cors_max_age,
 )
 
 # 注册路由

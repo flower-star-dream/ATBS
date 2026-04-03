@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "saved_at": "2026-04-01T21:57:35.290001+08:00",
+  "tasks": [
+    {
+      "task_id": "TRAIN-20260401215735-930C6FA1",
+      "status": "pending",
+      "user_id": "test_user",
+      "priority": 0,
+      "created_at": "2026-04-01T21:57:35.262535+08:00",
+      "started_at": "2026-04-01T21:57:35.264058+08:00",
+      "completed_at": null,
+      "result": null,
+      "error_info": null,
+      "progress_stage": "initializing",
+      "progress_percent": 0,
+      "progress_message": "恢复中: 恢复中: ",
+      "current_step": "",
+      "completed_steps": 0,
+      "estimated_remaining_seconds": null,
+      "has_checkpoint": false,
+      "checkpoint_path": null,
+      "last_checkpoint_time": null
+    }
+  ]
+}

@@ -85,6 +85,29 @@ class PredictionProperties(BaseModel):
     confidence_level: float = Field(default=0.95, ge=0.0, le=1.0, alias="confidence-level", description="默认置信水平")
 
 
+class AutoRetrainProperties(BaseModel):
+    """自动重训配置 - 对应 auto-retrain.*"""
+    enabled: bool = Field(default=True, description="是否启用自动重训")
+    schedule_time: str = Field(default="02:00", alias="schedule-time", description="每日执行时间 (HH:MM)")
+    retrain_cycle_days: int = Field(default=7, ge=1, le=30, alias="retrain-cycle-days", description="重训周期（天）")
+    order_service_name: str = Field(default="order-service", alias="order-service-name", description="Order服务名")
+    data_file: str = Field(default="bus_data.csv", alias="data-file", description="数据文件名")
+    max_data_rows: int = Field(default=145, ge=50, le=500, alias="max-data-rows", description="最大数据行数（滚动窗口）")
+    use_grid_search: bool = Field(default=True, alias="use-grid-search", description="是否使用网格搜索")
+    scoring: str = Field(default="mape", description="评分指标")
+
+    @field_validator("schedule_time")
+    @classmethod
+    def validate_schedule_time(cls, v):
+        """验证时间格式"""
+        try:
+            from datetime import datetime
+            datetime.strptime(v, "%H:%M")
+            return v
+        except ValueError:
+            raise ValueError("schedule-time 格式错误，应为 HH:MM")
+
+
 class JwtTokenConfig(BaseModel):
     """JWT Token 配置 - 对应 jwt.tokens.{type}.*"""
     secret_key: str = Field(default="", alias="secret-key", description="JWT 签名密钥")
@@ -119,10 +142,15 @@ class JwtProperties(BaseModel):
 
 
 class CorsProperties(BaseModel):
-    """CORS 跨域配置 - 对应 cors.*"""
-    origins: List[str] = Field(default_factory=lambda: ["*"], description="允许的跨域来源")
+    """CORS 跨域配置 - 对应 cors.* (参考 Java CorsProperties)"""
+    allow_origins: List[str] = Field(default_factory=lambda: ["*"], alias="allow-origins", description="允许的跨域来源")
+    allow_methods: List[str] = Field(default_factory=lambda: ["*"], alias="allow-methods", description="允许的HTTP方法")
+    allow_headers: List[str] = Field(default_factory=lambda: ["*"], alias="allow-headers", description="允许的请求头")
+    expose_headers: List[str] = Field(default_factory=list, alias="expose-headers", description="暴露的响应头")
+    allow_credentials: bool = Field(default=True, alias="allow-credentials", description="是否允许携带凭证")
+    max_age: int = Field(default=3600, alias="max-age", description="预检请求缓存时间(秒)")
 
-    @field_validator("origins", mode="before")
+    @field_validator("allow_origins", mode="before")
     @classmethod
     def parse_origins(cls, v):
         """解析来源列表（支持字符串或列表）"""
@@ -132,6 +160,18 @@ class CorsProperties(BaseModel):
                 return json.loads(v)
             except:
                 return [v]
+        return v
+
+    @field_validator("allow_methods", "allow_headers", "expose_headers", mode="before")
+    @classmethod
+    def parse_string_list(cls, v):
+        """解析字符串列表（支持字符串或列表）"""
+        if isinstance(v, str):
+            try:
+                import json
+                return json.loads(v)
+            except:
+                return [item.strip() for item in v.split(",") if item.strip()]
         return v
 
 
@@ -349,6 +389,7 @@ class AppConfig(BaseSettings):
     spring: SpringProperties = Field(default_factory=SpringProperties, description="Spring 配置")
     server: ServerProperties = Field(default_factory=ServerProperties, description="服务器配置")
     prediction: PredictionProperties = Field(default_factory=PredictionProperties, description="预测服务配置")
+    auto_retrain: AutoRetrainProperties = Field(default_factory=AutoRetrainProperties, alias="auto-retrain", description="自动重训配置")
     jwt: JwtProperties = Field(default_factory=JwtProperties, description="JWT 配置")
     cors: CorsProperties = Field(default_factory=CorsProperties, description="CORS 配置")
     logging: LoggingProperties = Field(default_factory=LoggingProperties, description="日志配置")
@@ -482,9 +523,34 @@ class AppConfig(BaseSettings):
         return "Bearer "
 
     @property
-    def cors_origins(self) -> List[str]:
+    def cors_allow_origins(self) -> List[str]:
         """CORS 允许的来源"""
-        return self.cors.origins
+        return self.cors.allow_origins
+
+    @property
+    def cors_allow_methods(self) -> List[str]:
+        """CORS 允许的HTTP方法"""
+        return self.cors.allow_methods
+
+    @property
+    def cors_allow_headers(self) -> List[str]:
+        """CORS 允许的请求头"""
+        return self.cors.allow_headers
+
+    @property
+    def cors_expose_headers(self) -> List[str]:
+        """CORS 暴露的响应头"""
+        return self.cors.expose_headers
+
+    @property
+    def cors_allow_credentials(self) -> bool:
+        """CORS 是否允许携带凭证"""
+        return self.cors.allow_credentials
+
+    @property
+    def cors_max_age(self) -> int:
+        """CORS 预检请求缓存时间(秒)"""
+        return self.cors.max_age
 
     @property
     def base_dir(self) -> Path:
@@ -503,7 +569,20 @@ class AppConfig(BaseSettings):
 
     @property
     def data_file(self) -> Path:
-        """数据文件路径"""
+        """数据文件路径 - 优先使用bus_data.csv，不存在则使用airline-passengers.csv"""
+        bus_data_file = self.data_path / self.auto_retrain.data_file
+        if bus_data_file.exists():
+            return bus_data_file
+        return self.data_path / "airline-passengers.csv"
+
+    @property
+    def bus_data_file(self) -> Path:
+        """滚动数据文件路径"""
+        return self.data_path / self.auto_retrain.data_file
+
+    @property
+    def original_data_file(self) -> Path:
+        """原始数据文件路径"""
         return self.data_path / "airline-passengers.csv"
 
     # ========== 配置源优先级 ==========

@@ -298,13 +298,17 @@ class NacosServiceRegistry:
             return False
 
         # 停止心跳
-        if self._heartbeat_task:
+        if self._heartbeat_task and not self._heartbeat_task.done():
             self._heartbeat_task.cancel()
             try:
-                await self._heartbeat_task
+                # 等待任务取消，设置超时防止无限等待
+                await asyncio.wait_for(self._heartbeat_task, timeout=5.0)
+            except asyncio.TimeoutError:
+                logger.warning("心跳任务取消超时")
             except asyncio.CancelledError:
                 pass
-            self._heartbeat_task = None
+            finally:
+                self._heartbeat_task = None
 
         try:
             nacos_group = getattr(self._settings, 'nacos_group', 'DEFAULT_GROUP') if self._settings else 'DEFAULT_GROUP'

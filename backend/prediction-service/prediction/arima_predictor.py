@@ -20,7 +20,7 @@ from statsmodels.tsa.arima.model import ARIMA, ARIMAResults
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.data_processor import DataProcessor
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# 使用应用统一的日志配置，不重复调用 basicConfig
 logger = logging.getLogger(__name__)
 
 
@@ -50,9 +50,10 @@ class ARIMAPredictor:
         """
         从 resources 目录加载已训练的模型
         """
-        model_path = os.path.join(self.model_dir, 'arima_model.pkl')
-        params_path = os.path.join(self.model_dir, 'arima_params.json')
-        last_data_path = os.path.join(self.model_dir, 'last_data.json')
+        # 统一路径处理：直接使用传入的 resources_dir 作为模型目录
+        model_path = os.path.join(self.resources_dir, 'arima_model.pkl')
+        params_path = os.path.join(self.resources_dir, 'arima_params.json')
+        last_data_path = os.path.join(self.resources_dir, 'last_data.json')
 
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"模型文件不存在: {model_path}")

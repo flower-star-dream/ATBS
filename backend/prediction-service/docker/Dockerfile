@@ -14,7 +14,7 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
 COPY prediction-service/requirements.txt .
 
 # 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
 
 # 复制应用代码
 COPY prediction-service/app ./app/
@@ -28,8 +28,20 @@ COPY prediction-service/application.yml ./
 # 复制数据文件
 COPY prediction-service/data ./data/
 
-# 创建模型目录
-RUN mkdir -p model
+# 复制模型文件
+COPY prediction-service/model ./model/
+
+# 创建非 root 用户（带家目录）
+RUN groupadd -r appgroup && useradd -r -m -g appgroup appuser
+
+# 创建 Nacos 需要的日志目录并设置权限
+RUN mkdir -p /home/appuser/logs && chown -R appuser:appgroup /home/appuser
+
+# 设置应用目录权限
+RUN chown -R appuser:appgroup /app
+
+# 切换到非 root 用户
+USER appuser
 
 # 暴露端口
 EXPOSE 8085

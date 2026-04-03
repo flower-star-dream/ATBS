@@ -30,10 +30,16 @@ prediction:
   max-days: 365
   confidence-level: 0.95
 
-cors:
-  origins:
-    - "http://localhost:3000"
-    - "http://localhost:8085"
+# 自动重训配置
+auto-retrain:
+  enabled: true                    # 是否启用自动重训
+  schedule-time: "02:00"           # 每日执行时间 (HH:MM)
+  retrain-cycle-days: 7            # 重训周期（天）
+  order-service-name: "order-service"  # Order服务名（用于Nacos服务发现）
+  data-file: "bus_data.csv"        # 数据文件名
+  max-data-rows: 145               # 最大数据行数（滚动窗口大小）
+  use-grid-search: true            # 是否使用网格搜索
+  scoring: "mape"                  # 评分指标
 
 logging:
   level:

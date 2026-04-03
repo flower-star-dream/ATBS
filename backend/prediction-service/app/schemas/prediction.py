@@ -3,7 +3,7 @@
 对应原 Java 的 DTO 类
 """
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -19,7 +19,7 @@ class PredictionItem(BaseModel):
     """预测结果项"""
     model_config = {"populate_by_name": True}
 
-    prediction_date: date = Field(description="日期", alias="date")
+    prediction_date: date = Field(description="日期")
     predicted_passengers: int = Field(description="预测客流量")
     lower_bound: int = Field(description="置信区间下限")
     upper_bound: int = Field(description="置信区间上限")
@@ -83,3 +83,60 @@ class ModelInfoResponse(BaseModel):
     bic: Optional[float] = Field(None, description="BIC 值")
     sigma2: Optional[float] = Field(None, description="方差")
     training_history: Optional[dict] = Field(None, description="训练历史")
+
+
+# ==================== 异步训练任务相关模型 ====================
+
+class TaskProgressInfo(BaseModel):
+    """任务进度信息"""
+    stage: str = Field(description="当前阶段")
+    percent: int = Field(description="完成百分比 (0-100)", ge=0, le=100)
+    current_step: str = Field(description="当前步骤描述")
+    total_steps: int = Field(description="总步骤数")
+    completed_steps: int = Field(description="已完成步骤数")
+    estimated_remaining_seconds: Optional[int] = Field(None, description="预计剩余时间(秒)")
+    message: str = Field(description="进度消息")
+    updated_at: str = Field(description="更新时间")
+
+
+class TaskErrorInfo(BaseModel):
+    """任务错误信息"""
+    error_type: str = Field(description="错误类型")
+    error_message: str = Field(description="错误消息")
+    timestamp: str = Field(description="错误发生时间")
+
+
+class TrainingTaskResponse(BaseModel):
+    """训练任务响应模型"""
+    task_id: str = Field(description="任务ID")
+    status: str = Field(description="任务状态 (pending/processing/completed/failed/cancelled)")
+    progress: TaskProgressInfo = Field(description="任务进度信息")
+    created_at: str = Field(description="创建时间")
+    started_at: Optional[str] = Field(None, description="开始时间")
+    completed_at: Optional[str] = Field(None, description="完成时间")
+    result: Optional[TrainingResponse] = Field(None, description="训练结果（仅当status=completed时）")
+    error_info: Optional[TaskErrorInfo] = Field(None, description="错误信息（仅当status=failed时）")
+
+
+class TrainingTaskCreateResponse(BaseModel):
+    """训练任务创建响应"""
+    task_id: str = Field(description="任务ID")
+    status: str = Field(description="任务状态")
+    message: str = Field(description="响应消息")
+    created_at: str = Field(description="创建时间")
+
+
+class TrainingTaskListItem(BaseModel):
+    """训练任务列表项"""
+    task_id: str = Field(description="任务ID")
+    status: str = Field(description="任务状态")
+    progress_percent: int = Field(description="进度百分比")
+    current_stage: str = Field(description="当前阶段")
+    created_at: str = Field(description="创建时间")
+    completed_at: Optional[str] = Field(None, description="完成时间")
+
+
+class TrainingTaskListResponse(BaseModel):
+    """训练任务列表响应"""
+    total: int = Field(description="总任务数")
+    tasks: List[TrainingTaskListItem] = Field(description="任务列表")

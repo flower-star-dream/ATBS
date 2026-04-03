@@ -1,15 +1,15 @@
 """
-预测服务
-集成 ARIMA 模型训练和预测功能，支持异步训练任务
+异步预测服务
+集成 ARIMA 模型训练和预测功能，完全异步化实现
+支持任务持久化、检查点保存和崩溃恢复
 """
 import os
 import sys
 import json
 import logging
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, List, Callable
+from typing import Optional, Dict, Callable
 from pathlib import Path
 
 import pandas as pd
@@ -19,11 +19,12 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "prediction"))
 
 from prediction.arima_predictor import ARIMAPredictor
-from training.arima_trainer import ARIMATrainer
+from training.async_arima_trainer import AsyncARIMATrainer
 from utils.data_processor import DataProcessor
 
 from app.core.config import settings
-from app.core.task_manager import task_manager, TaskStage, TaskStatus
+from app.core.async_task_manager import async_task_manager, TaskStage, TaskStatus
+from app.core.task_persistence import TrainingCheckpoint, task_persistence
 from app.schemas.prediction import (
     PredictionRequest, PredictionResponse, PredictionItem, ModelInfo,
     TrainingResponse, ValidationMetrics, ModelInfoResponse,
@@ -34,22 +35,19 @@ from app.schemas.prediction import (
 logger = logging.getLogger(__name__)
 
 
-class PredictionService:
-    """预测服务类"""
+class AsyncPredictionService:
+    """完全异步化的预测服务类"""
 
     def __init__(self):
         self.predictor: Optional[ARIMAPredictor] = None
-        self._model_lock = asyncio.Lock()  # 用于保护模型加载/更新的锁
-        self._executor = ThreadPoolExecutor(max_workers=4)  # 线程池用于执行阻塞操作
+        self._model_lock = asyncio.Lock()
         self._load_model()
 
     def _load_model(self):
         """加载已训练的模型"""
-        # 统一模型路径：直接使用 settings.model_path 作为模型根目录
         model_file = settings.model_path / "arima_model.pkl"
         if model_file.exists():
             try:
-                # 传入 model_path 作为模型根目录
                 self.predictor = ARIMAPredictor(str(settings.model_path))
                 logger.info("模型加载成功")
             except Exception as e:
@@ -72,7 +70,6 @@ class PredictionService:
         params = self.predictor.params
         training_history = params.get('training_history', {})
 
-        # 解析训练时间
         training_time = None
         if 'end_time' in training_history:
             try:
@@ -80,7 +77,6 @@ class PredictionService:
             except:
                 pass
 
-        # 使用模型参数或默认值
         default_order = [5, 1, 0]
         return ModelInfo(
             order=params.get('order', default_order),
@@ -91,7 +87,7 @@ class PredictionService:
 
     async def predict(self, request: PredictionRequest) -> PredictionResponse:
         """
-        执行预测（异步版本）
+        纯异步执行预测
 
         Args:
             request: 预测请求
@@ -115,16 +111,15 @@ class PredictionService:
             )
 
         try:
-            # 在线程池中执行阻塞的预测操作
-            loop = asyncio.get_event_loop()
-            result_df = await loop.run_in_executor(
-                self._executor,
-                self._do_predict_sync,
-                request.days,
-                request.confidence_level
+            # 纯异步执行预测
+            alpha = 1 - request.confidence_level
+            result_df = await asyncio.to_thread(
+                self.predictor.predict,
+                steps=request.days,
+                alpha=alpha
             )
 
-            # 转换结果为 Pydantic 模型
+            # 转换结果
             predictions = []
             for _, row in result_df.iterrows():
                 weekday = row['Weekday']
@@ -157,30 +152,22 @@ class PredictionService:
                 model_info=self._get_model_info()
             )
 
-    def _do_predict_sync(self, days: int, confidence_level: float) -> pd.DataFrame:
-        """同步执行预测（在线程池中运行）"""
-        alpha = 1 - confidence_level
-        return self.predictor.predict(steps=days, alpha=alpha)
-
-    async def create_training_task(self, user_id: Optional[str] = None) -> TrainingTaskCreateResponse:
+    async def create_training_task(self, user_id: Optional[str] = None, priority: int = 0) -> TrainingTaskCreateResponse:
         """
         创建异步训练任务
 
         Args:
             user_id: 用户ID
+            priority: 任务优先级
 
         Returns:
             任务创建响应
         """
         # 创建任务
-        task = await task_manager.create_task(user_id)
+        task = await async_task_manager.create_task(user_id=user_id, priority=priority)
 
-        # 提交训练任务到队列
-        await task_manager.submit_task(
-            task.task_id,
-            self._run_training_with_progress,
-            task.task_id
-        )
+        # 启动训练协程
+        asyncio.create_task(self._execute_training_task(task.task_id))
 
         return TrainingTaskCreateResponse(
             task_id=task.task_id,
@@ -189,32 +176,33 @@ class PredictionService:
             created_at=task.created_at.isoformat()
         )
 
-    def _run_training_with_progress(self, task_id: str, progress_callback: Optional[Callable] = None) -> Dict:
+    async def _execute_training_task(self, task_id: str):
         """
-        运行训练任务并更新进度
+        执行训练任务
 
         Args:
             task_id: 任务ID
-            progress_callback: 进度回调函数
-
-        Returns:
-            训练结果字典
         """
-        beijing_tz = timezone(timedelta(hours=8))
+        task = await async_task_manager.get_task(task_id)
+        if not task:
+            logger.error(f"任务 {task_id} 不存在")
+            return
 
-        def update_progress(stage: TaskStage, percent: int, message: str, **kwargs):
-            """更新进度辅助函数"""
-            if progress_callback:
-                progress_callback(stage, percent, message, **kwargs)
-            logger.info(f"[{task_id}] {stage.value}: {percent}% - {message}")
+        # 更新状态为处理中
+        await async_task_manager.update_task_status(task_id, TaskStatus.PROCESSING)
+
+        # 创建检查点保存回调
+        async def checkpoint_callback(task_id: str, checkpoint: TrainingCheckpoint):
+            await async_task_manager.save_checkpoint(task_id, checkpoint)
 
         try:
             # 阶段1: 初始化
-            update_progress(
-                TaskStage.INITIALIZING,
-                5,
-                "正在初始化训练环境...",
-                current_step="初始化"
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.INITIALIZING,
+                percent=5,
+                current_step="初始化",
+                message="正在初始化训练环境..."
             )
 
             # 检查数据文件
@@ -223,86 +211,126 @@ class PredictionService:
                 raise FileNotFoundError(f"数据文件不存在: {data_file}")
 
             # 阶段2: 数据加载
-            update_progress(
-                TaskStage.DATA_LOADING,
-                10,
-                "正在加载月度数据...",
-                current_step="数据加载"
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.DATA_LOADING,
+                percent=10,
+                current_step="数据加载",
+                message="正在加载日度数据..."
             )
 
-            processor = DataProcessor()
-            monthly_data = processor.load_monthly_data(str(data_file))
+            # 异步读取数据
+            daily_df = await asyncio.to_thread(pd.read_csv, data_file)
 
-            # 阶段3: 数据处理
-            update_progress(
-                TaskStage.DATA_PROCESSING,
-                20,
-                "正在将月度数据转换为日度数据...",
-                current_step="数据处理"
-            )
+            # 验证数据格式
+            if 'Date' in daily_df.columns and 'Passengers' in daily_df.columns:
+                daily_df['Date'] = pd.to_datetime(daily_df['Date'])
+                daily_df = daily_df.sort_values('Date').reset_index(drop=True)
+                passenger_series = daily_df['Passengers']
+                logger.info(f"已加载日度数据: {len(passenger_series)} 条记录")
+            elif 'Month' in daily_df.columns and 'Passengers' in daily_df.columns:
+                # 月度格式，需要转换
+                await async_task_manager.update_task_progress(
+                    task_id=task_id,
+                    stage=TaskStage.DATA_PROCESSING,
+                    percent=20,
+                    current_step="数据处理",
+                    message="正在将月度数据转换为日度数据..."
+                )
 
-            daily_data = processor.monthly_to_daily(
-                interpolation_method='cubic',
-                apply_effects=True,
-                apply_perturbation=True,
-                noise_level=0.08,
-                random_seed=42
-            )
-            passenger_series = daily_data['Passengers']
+                processor = DataProcessor()
+                monthly_data = processor.load_monthly_data(str(data_file))
+                daily_data = processor.monthly_to_daily(
+                    interpolation_method='cubic',
+                    apply_effects=True,
+                    apply_perturbation=True,
+                    noise_level=0.15,
+                    noise_type='adaptive',
+                    random_seed=42
+                )
+                passenger_series = daily_data['Passengers']
+            else:
+                raise ValueError(f"数据文件格式错误: {data_file}")
 
-            # 阶段4: 参数优化
-            update_progress(
-                TaskStage.PARAMETER_OPTIMIZATION,
-                35,
-                "正在自动寻找最优 ARIMA 参数...",
+            # 阶段3: 参数优化
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.PARAMETER_OPTIMIZATION,
+                percent=35,
                 current_step="参数优化",
+                message="正在自动寻找最优 ARIMA 参数...",
                 estimated_remaining_seconds=120
             )
 
-            trainer = ARIMATrainer(p=5, d=1, q=0)
-            trainer.find_best_params(passenger_series, max_p=5, max_d=2, max_q=5)
+            # 检查是否有检查点需要恢复
+            checkpoint = None
+            if task.checkpoint:
+                checkpoint = task.checkpoint
+                logger.info(f"从检查点恢复训练: {task_id}, 当前阶段: {checkpoint.stage}")
 
-            # 阶段5: 模型训练
-            update_progress(
-                TaskStage.MODEL_TRAINING,
-                60,
-                f"正在训练 ARIMA({trainer.p},{trainer.d},{trainer.q}) 模型...",
+            # 创建异步训练器
+            trainer = AsyncARIMATrainer(p=5, d=1, q=0)
+            trainer.set_checkpoint_callback(checkpoint_callback, task_id)
+
+            # 从检查点恢复（如果有）
+            if checkpoint:
+                trainer.load_from_checkpoint(checkpoint)
+
+            # 异步寻找最优参数
+            await trainer.find_best_params(
+                passenger_series,
+                max_p=5,
+                max_d=2,
+                max_q=5
+            )
+
+            # 阶段4: 模型训练
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.MODEL_TRAINING,
+                percent=60,
                 current_step="模型训练",
+                message=f"正在训练 ARIMA({trainer.p},{trainer.d},{trainer.q}) 模型...",
                 estimated_remaining_seconds=60
             )
 
-            history = trainer.train(
+            # 异步训练模型
+            history = await trainer.train(
                 passenger_series,
                 validate=True,
                 test_size=30
             )
 
-            # 阶段6: 模型验证
-            update_progress(
-                TaskStage.MODEL_VALIDATION,
-                85,
-                "正在验证模型性能...",
+            # 阶段5: 模型验证
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.MODEL_VALIDATION,
+                percent=85,
                 current_step="模型验证",
+                message="正在验证模型性能...",
                 estimated_remaining_seconds=20
             )
 
-            # 阶段7: 模型保存
-            update_progress(
-                TaskStage.MODEL_SAVING,
-                95,
-                "正在保存模型...",
+            # 阶段6: 模型保存
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.MODEL_SAVING,
+                percent=95,
                 current_step="模型保存",
+                message="正在保存模型...",
                 estimated_remaining_seconds=10
             )
 
-            trainer.save_model(str(settings.model_path))
+            # 异步保存模型
+            await trainer.save_model(str(settings.model_path))
 
             # 完成
-            update_progress(
-                TaskStage.COMPLETED,
-                100,
-                "训练完成！",
-                current_step="完成"
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.COMPLETED,
+                percent=100,
+                current_step="完成",
+                message="训练完成！"
             )
 
             # 构建验证指标
@@ -316,33 +344,47 @@ class PredictionService:
                     'test_size': val['test_size']
                 }
 
-            # 返回训练结果
-            return {
+            # 构建结果
+            result = {
                 'status': 'success',
                 'message': '模型训练成功',
                 'order': [trainer.p, trainer.d, trainer.q],
                 'aic': history.get('aic'),
                 'bic': history.get('bic'),
-                'training_time': datetime.now(beijing_tz).isoformat(),
+                'training_time': self._get_beijing_time().isoformat(),
                 'validation': validation,
                 'data_length': history.get('data_length', len(passenger_series))
             }
 
+            # 更新任务状态为完成
+            await async_task_manager.update_task_status(
+                task_id=task_id,
+                status=TaskStatus.COMPLETED,
+                result=result
+            )
+
+            # 重新加载模型
+            async with self._model_lock:
+                self._load_model()
+
+            logger.info(f"训练任务 {task_id} 完成")
+
         except Exception as e:
             logger.error(f"训练任务 {task_id} 失败: {e}", exc_info=True)
-            raise
+            error_info = {
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "timestamp": self._get_beijing_time().isoformat()
+            }
+            await async_task_manager.update_task_status(
+                task_id=task_id,
+                status=TaskStatus.FAILED,
+                error_info=error_info
+            )
 
     async def get_task_status(self, task_id: str) -> Optional[TrainingTaskResponse]:
-        """
-        获取任务状态
-
-        Args:
-            task_id: 任务ID
-
-        Returns:
-            任务状态响应
-        """
-        task = await task_manager.get_task(task_id)
+        """获取任务状态"""
+        task = await async_task_manager.get_task(task_id)
         if not task:
             return None
 
@@ -408,19 +450,9 @@ class PredictionService:
         limit: int = 100,
         offset: int = 0
     ) -> TrainingTaskListResponse:
-        """
-        获取任务列表
-
-        Args:
-            status: 状态筛选
-            limit: 数量限制
-            offset: 偏移量
-
-        Returns:
-            任务列表响应
-        """
+        """获取任务列表"""
         task_status = TaskStatus(status) if status else None
-        tasks = await task_manager.get_all_tasks(task_status, limit, offset)
+        tasks = await async_task_manager.get_all_tasks(task_status, limit, offset)
 
         task_items = []
         for task in tasks:
@@ -439,26 +471,18 @@ class PredictionService:
         )
 
     async def cancel_task(self, task_id: str) -> bool:
-        """
-        取消任务
-
-        Args:
-            task_id: 任务ID
-
-        Returns:
-            是否成功取消
-        """
-        return await task_manager.cancel_task(task_id)
+        """取消任务"""
+        return await async_task_manager.cancel_task(task_id)
 
     async def train(self) -> TrainingResponse:
         """
-        训练模型（同步版本，向后兼容）
+        同步训练（向后兼容，内部调用异步）
 
         Returns:
             训练响应
         """
         try:
-            # 检查数据文件是否存在
+            # 检查数据文件
             data_file = settings.data_file
             if not data_file.exists():
                 return TrainingResponse(
@@ -469,18 +493,38 @@ class PredictionService:
                     data_length=0
                 )
 
-            # 在线程池中执行阻塞的训练操作
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(
-                self._executor,
-                self._do_train_sync
+            # 创建高优先级任务并等待完成
+            task = await self.create_training_task(priority=0)
+            task_id = task.task_id
+
+            # 等待任务完成
+            while True:
+                task_status = await self.get_task_status(task_id)
+                if not task_status:
+                    break
+
+                if task_status.status in ['completed', 'failed']:
+                    if task_status.result:
+                        return task_status.result
+                    elif task_status.error_info:
+                        return TrainingResponse(
+                            status="error",
+                            message=task_status.error_info.error_message,
+                            order=[5, 1, 0],
+                            training_time=self._get_beijing_time(),
+                            data_length=0
+                        )
+                    break
+
+                await asyncio.sleep(1)
+
+            return TrainingResponse(
+                status="error",
+                message="训练任务异常结束",
+                order=[5, 1, 0],
+                training_time=self._get_beijing_time(),
+                data_length=0
             )
-
-            # 使用锁保护模型加载
-            async with self._model_lock:
-                self._load_model()
-
-            return result
 
         except Exception as e:
             logger.error(f"训练失败: {e}")
@@ -492,67 +536,14 @@ class PredictionService:
                 data_length=0
             )
 
-    def _do_train_sync(self) -> TrainingResponse:
-        """同步执行训练（在线程池中运行）"""
-        data_file = settings.data_file
-
-        # 加载和处理数据
-        processor = DataProcessor()
-        monthly_data = processor.load_monthly_data(str(data_file))
-        daily_data = processor.monthly_to_daily(interpolation_method='cubic')
-        passenger_series = daily_data['Passengers']
-
-        # 创建训练器并自动寻找最优参数
-        logger.info("自动寻找最优 ARIMA 参数...")
-        trainer = ARIMATrainer(p=5, d=1, q=0)
-        trainer.find_best_params(passenger_series)
-
-        # 训练模型（使用默认验证集大小30天）
-        history = trainer.train(
-            passenger_series,
-            validate=True,
-            test_size=30
-        )
-
-        # 保存模型
-        trainer.save_model(str(settings.model_path))
-
-        # 构建验证指标
-        validation = None
-        if 'validation' in history:
-            val = history['validation']
-            validation = ValidationMetrics(
-                mae=val['mae'],
-                rmse=val['rmse'],
-                mape=val['mape'],
-                test_size=val['test_size']
-            )
-
-        return TrainingResponse(
-            status="success",
-            message="模型训练成功",
-            order=[trainer.p, trainer.d, trainer.q],
-            aic=history.get('aic'),
-            bic=history.get('bic'),
-            training_time=self._get_beijing_time(),
-            validation=validation,
-            data_length=history.get('data_length', len(passenger_series))
-        )
-
     async def get_model_info(self) -> ModelInfoResponse:
-        """
-        获取模型信息
-
-        Returns:
-            模型信息响应
-        """
+        """获取模型信息"""
         if not self.predictor:
             return ModelInfoResponse(
                 model_loaded=False,
                 prediction_time=self._get_beijing_time()
             )
 
-        # 检查模型参数是否存在
         if not self.predictor.params:
             return ModelInfoResponse(
                 model_loaded=True,
@@ -566,7 +557,6 @@ class PredictionService:
 
         info = self.predictor.get_model_info()
 
-        # 解析训练时间
         training_time = None
         if 'training_history' in info and 'end_time' in info['training_history']:
             try:
@@ -585,5 +575,5 @@ class PredictionService:
         )
 
 
-# 全局服务实例
-prediction_service = PredictionService()
+# 全局异步服务实例
+async_prediction_service = AsyncPredictionService()
