@@ -5,8 +5,8 @@
 ## 功能特性
 
 ### 1. 班次列表页面 (Schedule-list-view.vue)
-- **列表展示**: 展示班次号、列车信息、线路信息、列车长、余票数、出发/到达时间等
-- **搜索筛选**: 支持按列车、线路、列车长进行筛选
+- **列表展示**: 展示班次号、飞机信息、线路信息、机长、余票数、出发/到达时间等
+- **搜索筛选**: 支持按飞机、线路、机长进行筛选
 - **批量操作**: 支持批量删除班次
 - **分页功能**: 支持分页展示和数据量控制
 - **状态显示**: 余票数量使用不同颜色的标签进行状态提示
@@ -56,7 +56,7 @@ Schedule/
 - `DELETE /schedule/delete/{id}` - 删除班次
 
 #### 下拉框数据接口
-- `GET /schedule/airplane-options` - 获取列车选项列表
+- `GET /schedule/airplane-options` - 获取飞机选项列表
 - `GET /schedule/route-options` - 获取线路选项列表
 
 ## 数据模型
@@ -65,9 +65,9 @@ Schedule/
 ```sql
 CREATE TABLE `atbs_schedule` (
   `id` bigint NOT NULL COMMENT '班次号',
-  `airplane_id` bigint NOT NULL COMMENT '列车号',
+  `airplane_id` bigint NOT NULL COMMENT '飞机号',
   `route_id` bigint NOT NULL COMMENT '线路号',
-  `conductor` varchar(10) DEFAULT NULL COMMENT '列车长',
+  `conductor` varchar(10) DEFAULT NULL COMMENT '机长',
   `available_tickets` int NOT NULL COMMENT '余票',
   `start_time` datetime NOT NULL COMMENT '出发时间',
   `end_time` datetime NOT NULL COMMENT '结束时间',
@@ -131,15 +131,15 @@ CREATE TABLE `atbs_schedule` (
 ### 3. 主要特性
 
 #### 表单验证
-- 列车和线路为必填项
-- 列车长姓名长度限制2-10个字符
+- 飞机和线路为必填项
+- 机长姓名长度限制2-10个字符
 - 余票数量范围0-2000
 - 出发时间必须早于到达时间
 
 #### 关联数据展示
-- 自动关联显示列车名称和型号
+- 自动关联显示飞机名称和型号
 - 自动关联显示线路信息和起终点站
-- 支持模糊搜索列车长和线路信息
+- 支持模糊搜索机长和线路信息
 
 #### 用户体验
 - 响应式布局适配不同屏幕尺寸
@@ -170,7 +170,7 @@ CREATE TABLE `atbs_schedule` (
 ## 注意事项
 
 1. **时间验证**: 确保到达时间晚于出发时间
-2. **数据关联**: 班次关联的列车和线路必须存在
+2. **数据关联**: 班次关联的飞机和线路必须存在
 3. **并发处理**: 考虑多用户同时操作的并发问题
 4. **性能优化**: 大数据量时考虑分页和缓存策略
 5. **权限控制**: 确保只有授权用户才能进行增删改操作

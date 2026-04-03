@@ -99,16 +99,16 @@ class ResidualDiagnostics:
     durbin_watson: float  # Durbin-Watson统计量
 
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
+        """转换为字典，将NumPy类型转换为Python原生类型以确保JSON可序列化"""
         return {
-            'ljung_box_stat': self.ljung_box_stat,
-            'ljung_box_pvalue': self.ljung_box_pvalue,
-            'is_white_noise': self.is_white_noise,
-            'residual_mean': self.residual_mean,
-            'residual_std': self.residual_std,
-            'residual_skewness': self.residual_skewness,
-            'residual_kurtosis': self.residual_kurtosis,
-            'durbin_watson': self.durbin_watson
+            'ljung_box_stat': float(self.ljung_box_stat),
+            'ljung_box_pvalue': float(self.ljung_box_pvalue),
+            'is_white_noise': bool(self.is_white_noise),
+            'residual_mean': float(self.residual_mean),
+            'residual_std': float(self.residual_std),
+            'residual_skewness': float(self.residual_skewness),
+            'residual_kurtosis': float(self.residual_kurtosis),
+            'durbin_watson': float(self.durbin_watson)
         }
 
 
@@ -131,22 +131,22 @@ class GridSearchResult:
     composite_score: float = float('inf')  # 综合评分
 
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
+        """转换为字典，将NumPy类型转换为Python原生类型以确保JSON可序列化"""
         return {
             'params': self.params,
-            'mean_mae': self.mean_mae,
-            'mean_rmse': self.mean_rmse,
-            'mean_mape': self.mean_mape,
-            'mean_aic': self.mean_aic,
-            'mean_bic': self.mean_bic,
-            'std_mae': self.std_mae,
-            'std_rmse': self.std_rmse,
-            'std_mape': self.std_mape,
+            'mean_mae': float(self.mean_mae),
+            'mean_rmse': float(self.mean_rmse),
+            'mean_mape': float(self.mean_mape),
+            'mean_aic': float(self.mean_aic),
+            'mean_bic': float(self.mean_bic),
+            'std_mae': float(self.std_mae),
+            'std_rmse': float(self.std_rmse),
+            'std_mape': float(self.std_mape),
             'fold_scores': self.fold_scores,
-            'is_valid': self.is_valid,
+            'is_valid': bool(self.is_valid),
             'error_message': self.error_message,
             'residual_diagnostics': self.residual_diagnostics.to_dict() if self.residual_diagnostics else None,
-            'composite_score': self.composite_score
+            'composite_score': float(self.composite_score)
         }
 
 
@@ -594,9 +594,12 @@ class TimeSeriesGridSearch:
         # 执行网格搜索
         self.results = []
 
-        if self.n_jobs > 1 and total_combinations > 4:
+        # 限制并行度，避免占用过多CPU资源
+        max_parallel_workers = min(self.n_jobs, 4)  # 最多使用4个进程
+
+        if max_parallel_workers > 1 and total_combinations > 4:
             # 并行执行
-            logger.info(f"使用并行计算，作业数: {self.n_jobs}")
+            logger.info(f"使用并行计算，作业数: {max_parallel_workers} (限制最大4个)")
 
             cv_config_tuple = (
                 self.cv_config.n_splits,
@@ -611,13 +614,14 @@ class TimeSeriesGridSearch:
             ]
 
             completed = 0
-            with ProcessPoolExecutor(max_workers=self.n_jobs) as executor:
+            with ProcessPoolExecutor(max_workers=max_parallel_workers) as executor:
                 futures = {executor.submit(self._evaluate_params_static, args): args
                           for args in args_list}
 
                 for future in as_completed(futures):
                     try:
-                        result = future.result()
+                        # 添加超时控制，防止单个任务阻塞过久
+                        result = future.result(timeout=300)  # 5分钟超时
                         self.results.append(result)
                         completed += 1
 

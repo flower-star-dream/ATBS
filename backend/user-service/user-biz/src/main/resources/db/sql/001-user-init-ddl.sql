@@ -9,14 +9,14 @@ CREATE TABLE IF NOT EXISTS `atbs_employee` (
   `avatar` varchar(200) DEFAULT NULL COMMENT '头像 url',
   `status` int NOT NULL DEFAULT '1' COMMENT '状态',
   `phone` varchar(11) NOT NULL COMMENT '手机号',
-  `0` varchar(10) NOT NULL COMMENT '权限等级',
+  `permission_level` varchar(10) NOT NULL COMMENT '权限等级',
   `affiliated_site` varchar(100) DEFAULT NULL COMMENT '所属站点',
   `create_time` datetime NOT NULL COMMENT '创建时间',
   `update_time` datetime NOT NULL COMMENT '更新时间',
   `create_person_id` bigint NOT NULL COMMENT '创建人 id',
   `update_person_id` bigint NOT NULL COMMENT '更新者 id',
   `deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除:0-未删除，1-已删除',
-  `vision` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
+  `version` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='atbs_员工';
 
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `atbs_passenger` (
   `create_person_id` bigint NOT NULL COMMENT '创建人 id',
   `update_person_id` bigint NOT NULL COMMENT '更新者 id',
   `deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除:0-未删除，1-已删除',
-  `vision` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
+  `version` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='atbs_乘客';
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `atbs_user` (
   `create_person_id` bigint NOT NULL COMMENT '创建人 id',
   `update_person_id` bigint NOT NULL COMMENT '更新者 id',
   `deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除:0-未删除，1-已删除',
-  `vision` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
+  `version` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='atbs_用户';
 

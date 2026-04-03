@@ -16,6 +16,18 @@ export const useAppStore = defineStore('app', () => {
       title: '首页',
       icon: 'House'
     },
+    {
+      path: '/prediction',
+      title: '客流预测',
+      icon: 'TrendCharts',
+      children: [
+        {
+          path: '/prediction/analysis',
+          title: '预测分析',
+          icon: 'TrendCharts'
+        }
+      ]
+    },
     // {
     //   path: '/dashboard',
     //   title: '仪表盘',
@@ -171,7 +183,7 @@ export const useAppStore = defineStore('app', () => {
           ]
         },
       ]
-    },
+    }
     // {
     //   path: '/system',
     //   title: '系统配置',

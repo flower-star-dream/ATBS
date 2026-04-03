@@ -32,3 +32,6 @@ export * from './station'
 
 // 航线机场关联管理相关 API
 export * from './route-station'
+
+// 客流预测管理相关 API
+export * from './prediction'

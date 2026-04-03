@@ -43,7 +43,7 @@
 - `SeatReservationList`: 列表展示类型
 - `SeatReservationForm`: 表单数据类型
 - `BookingStatus`: 预订状态枚举
-- `FlightOption`: 航班选择项类型
+- `ScheduleOption`: 航班选择项类型
 
 ## 技术实现
 
@@ -75,10 +75,10 @@ createSeatReservation(data: Partial<SeatReservationForm>) // 创建
 updateSeatReservation(id: number, data: Partial<SeatReservationForm>) // 更新
 deleteSeatReservation(id: number)                       // 删除
 batchDeleteSeatReservation(ids: number[])               // 批量删除
-getFlightOptions()                                    // 获取航班选项
+getScheduleOptions()                                    // 获取航班选项
 updateSeatStatus(id: number, status: number)            // 更新状态
 batchUpdateSeatStatus(ids: number[], status: number)    // 批量更新状态
-checkSeatAvailability(flightId: number, seatNumber: number) // 检查可用性
+checkSeatAvailability(scheduleId: number, seatNumber: number) // 检查可用性
 ```
 
 ## 使用说明
@@ -147,7 +147,7 @@ const handleCancel = () => {
 | 字段名 | 类型 | 描述 |
 |--------|------|------|
 | id | bigint | 座位预订号（主键） |
-| flight_id | bigint | 航班号（外键） |
+| schedule_id | bigint | 航班号（外键） |
 | seat_number | int | 座位号 |
 | booking_status | int | 预订状态（0:可预订, 1:已预订, 2:已锁定） |
 | create_time | datetime | 创建时间 |
@@ -160,7 +160,7 @@ const handleCancel = () => {
 ```typescript
 interface SeatReservation {
   id: number
-  flightId: number
+  scheduleId: number
   seatNumber: number
   bookingStatus: number
   createTime?: string

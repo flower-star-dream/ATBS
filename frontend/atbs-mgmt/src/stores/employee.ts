@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { LoginForm, EmployeeInfo } from '@/types'
 import { login } from '@/api/employee'
 
+
 export const useEmployeeStore = defineStore('employee', () => {
   // 初始化时从localStorage读取数据
   const token = ref(localStorage.getItem('token') || '')

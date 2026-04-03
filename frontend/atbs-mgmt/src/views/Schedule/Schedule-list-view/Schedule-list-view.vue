@@ -29,7 +29,7 @@
       </el-button>
     </template>
 
-    <!-- 自定义列车名列 -->
+    <!-- 自定义飞机名列 -->
     <template #column-airplaneName="{ row }">
       <el-tag type="info" size="small">{{ row.airplaneName || '-' }}</el-tag>
     </template>
@@ -115,7 +115,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { getScheduleList, addSchedule, updateSchedule, deleteSchedule } from '@/api/schedule'
-import { getAircraftList } from '@/api/airplane'
+import { getAirplaneList } from '@/api/airplane'
 import { getRouteList } from '@/api/route'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useEmployeeStore } from '@/stores'
@@ -156,7 +156,7 @@ const routeAllLoaded = ref(false)
 const isLoadingMore = ref(false)
 
 /**
- * 列车远程搜索方法
+ * 飞机远程搜索方法
  * @param {string} query - 搜索关键词
  */
 const handleAirplaneRemoteSearch = async (query) => {
@@ -167,14 +167,14 @@ const handleAirplaneRemoteSearch = async (query) => {
 
   airplaneLoading.value = true
   try {
-    // 调用带分页的API获取列车列表
+    // 调用带分页的API获取飞机列表
     const response = await getAirplaneList({
       page: 1,
       pageSize: 10,
       keyword: query
     })
 
-    // 更新总数和列车列表
+    // 更新总数和飞机列表
     airplaneTotal.value = response.total
     searchAirplanes.value = response.records.map(airplane => ({
       value: airplane.id,
@@ -184,7 +184,7 @@ const handleAirplaneRemoteSearch = async (query) => {
       serviceYears: airplane.serviceYears
     }))
   } catch (error) {
-    ElMessage.error('获取列车列表失败')
+    ElMessage.error('获取飞机列表失败')
     searchAirplanes.value = []
   } finally {
     airplaneLoading.value = false
@@ -237,9 +237,9 @@ const handleRouteRemoteSearch = async (query) => {
 const formFields = computed(() => [
   {
     prop: 'airplaneId',
-    label: '列车',
+    label: '飞机',
     type: 'select',
-    placeholder: '请选择列车',
+    placeholder: '请选择飞机',
     options: searchAirplanes,
     required: true,
     clearable: true,
@@ -271,9 +271,9 @@ const formFields = computed(() => [
   },
   {
     prop: 'conductor',
-    label: '列车长',
+    label: '机长',
     type: 'input',
-    placeholder: '请输入列车长姓名',
+    placeholder: '请输入机长姓名',
     maxlength: 10,
     showWordLimit: true,
     required: true
@@ -303,14 +303,14 @@ const formFields = computed(() => [
 // 表单验证规则
 const formRules = computed(() => ({
   airplaneId: [
-    { required: true, message: '请选择列车', trigger: 'change' }
+    { required: true, message: '请选择飞机', trigger: 'change' }
   ],
   routeId: [
     { required: true, message: '请选择线路', trigger: 'change' }
   ],
   conductor: [
-    { required: true, message: '请输入列车长姓名', trigger: 'blur' },
-    { min: 2, max: 10, message: '列车长姓名长度在 2 到 10 个字符', trigger: 'blur' }
+    { required: true, message: '请输入机长姓名', trigger: 'blur' },
+    { min: 2, max: 10, message: '机长姓名长度在 2 到 10 个字符', trigger: 'blur' }
   ],
   availableTickets: [
     { required: true, message: '请输入余票数', trigger: 'blur' },
@@ -345,7 +345,7 @@ const tableColumns = [
   },
   {
     prop: 'airplaneName',
-    label: '列车',
+    label: '飞机',
     minWidth: 120,
     align: 'center'
   },
@@ -358,7 +358,7 @@ const tableColumns = [
   },
   {
     prop: 'conductor',
-    label: '列车长',
+    label: '机长',
     width: 100,
     align: 'center'
   },
@@ -405,9 +405,9 @@ const tableColumns = [
 const searchFields = computed(() => [
   {
     prop: 'airplaneId',
-    label: '列车',
+    label: '飞机',
     type: 'select',
-    placeholder: '请选择列车',
+    placeholder: '请选择飞机',
     options: searchAirplanes,
     clearable: true,
     filterable: true,
@@ -437,9 +437,9 @@ const searchFields = computed(() => [
   },
   {
     prop: 'conductor',
-    label: '列车长',
+    label: '机长',
     type: 'input',
-    placeholder: '请输入列车长姓名',
+    placeholder: '请输入机长姓名',
     clearable: true
   }
 ])
@@ -462,7 +462,7 @@ const getTicketStatusType = (tickets) => {
 }
 
 /**
- * 获取列车选项列表（默认加载第一页数据）
+ * 获取飞机选项列表（默认加载第一页数据）
  */
 const fetchAirplaneOptions = async () => {
   try {
@@ -480,14 +480,14 @@ const fetchAirplaneOptions = async () => {
       serviceYears: airplane.serviceYears
     }))
   } catch (error) {
-    console.error('获取列车选项失败:', error)
-    ElMessage.error('获取列车选项失败')
+    console.error('获取飞机选项失败:', error)
+    ElMessage.error('获取飞机选项失败')
   }
 }
 
 
 /**
- * 加载更多数据（列车或线路）
+ * 加载更多数据（飞机或线路）
  * @param {string} type - 类型：'airplane' 或 'route'
  */
 const loadMoreData = async (type) => {
@@ -558,7 +558,7 @@ const loadMoreData = async (type) => {
       searchRoutes.value = [...searchRoutes.value, ...filteredNewOptions]
     }
   } catch (error) {
-    ElMessage.error(`加载更多${isAirplane ? '列车' : '线路'}失败`)
+    ElMessage.error(`加载更多${isAirplane ? '飞机' : '线路'}失败`)
   } finally {
     isLoadingMore.value = false
   }

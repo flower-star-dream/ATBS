@@ -89,4 +89,11 @@ public interface ITicketService extends IService<TicketEO> {
     TicketRES getByTicketId(Long id);
 
     List<TicketRES> getByOrderId(Long id);
+
+    /**
+     * 获取某日乘客数
+     * @param date 日期
+     * @return 乘客数
+     */
+    BigDecimal getDailyPassengers(String date);
 }

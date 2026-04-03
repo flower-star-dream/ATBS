@@ -161,8 +161,20 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '机场列表' }
           }
         ]
+      },
+      {
+        path: '/prediction',
+        name: 'Prediction',
+        meta: { title: '客流预测', icon: 'TrendCharts' },
+        children: [
+          {
+            path: '/prediction/analysis',
+            name: 'PredictionAnalysis',
+            component: () => import('@/views/Prediction/Prediction-view/Prediction-view.vue'),
+            meta: { title: '预测分析' }
+          }
+        ]
       }
-      
     ]
   },
   {

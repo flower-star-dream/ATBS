@@ -8,7 +8,7 @@
     :selected-count="selectedRows.length"
     :loading="loading"
     :show-selection="true"
-    :table-data="aircraftList"
+    :table-data="airplaneList"
     :table-columns="tableColumns"
     :search-fields="searchFields"
     :initial-search-form="initialSearchForm"
@@ -46,7 +46,7 @@
   <DialogForm
     v-model:visible="dialogVisible"
     :title="dialogTitle"
-    :form-data="aircraftForm"
+    :form-data="airplaneForm"
     :fields="formFields"
     :rules="formRules"
     :is-edit="isEdit"
@@ -58,7 +58,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getAircraftList, addAircraft, updateAircraft, deleteAircraft } from '@/api/airplane'
+import { getAirplaneList, addAirplane, updateAirplane, deleteAirplane } from '@/api/airplane'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useEmployeeStore } from '@/stores'
 import DialogForm from '@/components/DialogForm/DialogForm.vue'
@@ -71,10 +71,10 @@ const employeeInfo = computed(() => employeeStore.employeeInfo)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitLoading = ref(false)
-const aircraftForm = ref({
+const airplaneForm = ref({
   id: '',
-  aircraftName: '',
-  aircraftModel: '',
+  airplaneName: '',
+  airplaneModel: '',
   seatNum: 1,
   serviceYears: 0
 })
@@ -82,7 +82,7 @@ const aircraftForm = ref({
 // 表单字段配置
 const formFields = [
   {
-    prop: 'aircraftName',
+    prop: 'airplaneName',
     label: '飞机名',
     type: 'input',
     placeholder: '请输入飞机名',
@@ -93,7 +93,7 @@ const formFields = [
     }
   },
   {
-    prop: 'aircraftModel',
+    prop: 'airplaneModel',
     label: '飞机型号',
     type: 'input',
     placeholder: '请输入飞机型号',
@@ -118,11 +118,11 @@ const formFields = [
 
 // 表单验证规则
 const formRules = computed(() => ({
-  aircraftName: [
+  airplaneName: [
     { required: true, message: '请输入飞机名', trigger: 'blur' },
     { min: 2, max: 10, message: '飞机名长度在 2 到 10 个字符', trigger: 'blur' }
   ],
-  aircraftModel: [
+  airplaneModel: [
     { required: true, message: '请输入飞机型号', trigger: 'blur' },
     { max: 50, message: '飞机型号长度不能超过 50 个字符', trigger: 'blur' }
   ],
@@ -140,7 +140,7 @@ const formRules = computed(() => ({
 const dialogTitle = computed(() => isEdit.value ? '编辑飞机' : '新增飞机')
 
 // 响应式数据
-const aircraftList = ref([])
+const airplaneList = ref([])
 const loading = ref(false)
 const total = ref(0)
 const currentPage = ref(1)
@@ -158,13 +158,13 @@ const tableColumns = [
     align: 'center'
   },
   {
-    prop: 'aircraftName',
+    prop: 'airplaneName',
     label: '飞机名',
     minWidth: 120,
     align: 'center'
   },
   {
-    prop: 'aircraftModel',
+    prop: 'airplaneModel',
     label: '飞机型号',
     minWidth: 150,
     align: 'center',
@@ -218,14 +218,14 @@ const tableColumns = [
 // 搜索字段配置
 const searchFields = [
   {
-    prop: 'aircraftName',
+    prop: 'airplaneName',
     label: '飞机名',
     type: 'input',
     placeholder: '请输入飞机名',
     clearable: true
   },
   {
-    prop: 'aircraftModel',
+    prop: 'airplaneModel',
     label: '飞机型号',
     type: 'input',
     placeholder: '请输入飞机型号',
@@ -245,7 +245,7 @@ const initialSearchForm = searchFields.reduce((acc, field) => {
  * 获取飞机列表
  * @param {Object} searchParams - 搜索参数
  */
-const fetchAircraftList = async (searchParams = {}) => {
+const fetchAirplaneList = async (searchParams = {}) => {
   loading.value = true
   try {
     const params = {
@@ -255,7 +255,7 @@ const fetchAircraftList = async (searchParams = {}) => {
     }
     
     // API调用
-    const response = await getAircraftList(params)
+    const response = await getAirplaneList(params)
     const data = response.records
     
     // 模拟分页
@@ -263,10 +263,10 @@ const fetchAircraftList = async (searchParams = {}) => {
     const end = start + pageSize.value
     const paginatedData = data.slice(start, end)
     
-    aircraftList.value = paginatedData
+    airplaneList.value = paginatedData
     total.value = data.length
   } catch (error) {
-    aircraftList.value = []
+    airplaneList.value = []
     total.value = 0
   } finally {
     loading.value = false
@@ -282,7 +282,7 @@ const fetchAircraftList = async (searchParams = {}) => {
 const handleSearch = (formData) => {
   currentPage.value = 1 // 重置为第一页
   selectedRows.value = [] // 清空选择
-  fetchAircraftList(formData)
+  fetchAirplaneList(formData)
 }
 
 /**
@@ -291,7 +291,7 @@ const handleSearch = (formData) => {
 const handleReset = () => {
   currentPage.value = 1 // 重置为第一页
   selectedRows.value = [] // 清空选择
-  fetchAircraftList({}) // 重置后自动查询
+  fetchAirplaneList({}) // 重置后自动查询
 }
 
 /**
@@ -309,10 +309,10 @@ const handleAdd = () => {
   isEdit.value = false
   dialogVisible.value = true
   // 重置表单数据
-  aircraftForm.value = {
+  airplaneForm.value = {
     id: '',
-    aircraftName: '',
-    aircraftModel: '',
+    airplaneName: '',
+    airplaneModel: '',
     seatNum: 0,
     serviceYears: 0,
     status: AIRCRAFT_STATUS.ENABLED
@@ -341,12 +341,12 @@ const handleBatchDelete = async () => {
     
     const ids = selectedRows.value.map(row => row.id)
     for (const id of ids) {
-      await deleteAircraft(id)
+      await deleteAirplane(id)
     }
     ElMessage.success(`成功删除 ${selectedRows.value.length} 个飞机`)
     
     // 删除成功后刷新列表
-    fetchAircraftList()
+    fetchAirplaneList()
   } catch (error) {
     // 用户取消删除或发生错误
     if (error !== 'cancel') {
@@ -361,7 +361,7 @@ const handleBatchDelete = async () => {
  */
 const handleSizeChange = (size) => {
   pageSize.value = size
-  fetchAircraftList()
+  fetchAirplaneList()
 }
 
 /**
@@ -370,7 +370,7 @@ const handleSizeChange = (size) => {
  */
 const handlePageChange = (page) => {
   currentPage.value = page
-  fetchAircraftList()
+  fetchAirplaneList()
 }
 
 /**
@@ -381,10 +381,10 @@ const handleEdit = (row) => {
   isEdit.value = true
   dialogVisible.value = true
   // 复制数据到表单
-  aircraftForm.value = {
+  airplaneForm.value = {
     id: row.id,
-    aircraftName: row.aircraftName,
-    aircraftModel: row.aircraftModel,
+    airplaneName: row.airplaneName,
+    airplaneModel: row.airplaneModel,
     seatNum: row.seatNum,
     serviceYears: row.serviceYears,
     status: row.status
@@ -411,18 +411,18 @@ const handleFormSubmit = async (formData) => {
     
     if (isEdit.value) {
         // 编辑飞机
-        await updateAircraft(submitData)
+        await updateAirplane(submitData)
         ElMessage.success('更新飞机成功')
       } else {
         // 新增飞机
-        await addAircraft(submitData)
+        await addAirplane(submitData)
       ElMessage.success('新增飞机成功')
     }
     
     // 关闭弹窗
     dialogVisible.value = false
     // 刷新列表
-    fetchAircraftList()
+    fetchAirplaneList()
   } catch (error) {
     ElMessage.error(isEdit.value ? '更新失败' : '新增失败')
   } finally {
@@ -439,7 +439,7 @@ const handleFormSubmit = async (formData) => {
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除飞机「${row.aircraftName}」吗？`,
+      `确定要删除飞机「${row.airplaneName}」吗？`,
       '删除确认',
       {
         confirmButtonText: '确定',
@@ -449,10 +449,10 @@ const handleDelete = async (row) => {
     )
     
     // 调用删除接口
-    await deleteAircraft([row.id])
+    await deleteAirplane([row.id])
     ElMessage.success('删除成功')
     // 删除成功后刷新列表
-    fetchAircraftList()
+    fetchAirplaneList()
   } catch (error) {
     // 用户取消删除或发生错误
     if (error !== 'cancel') {
@@ -463,7 +463,7 @@ const handleDelete = async (row) => {
 
 // 组件挂载后加载数据
 onMounted(() => {
-  fetchAircraftList()
+  fetchAirplaneList()
 })
 </script>
 

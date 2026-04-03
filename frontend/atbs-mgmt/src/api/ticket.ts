@@ -32,7 +32,7 @@ export const updateTicketStatusService = (data: T.TicketStatusUpdateREQ): Promis
   return orderRequest.post('/ticket/status', {
     id: data.id,
     status: data.status,
-    flightId: data.flightId || undefined,
+    scheduleId: data.scheduleId || undefined,
     startStationId: data.startStationId || undefined,
     endStationId: data.endStationId || undefined
   })

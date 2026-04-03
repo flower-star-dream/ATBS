@@ -32,7 +32,7 @@ export const BOOKING_STATUS_TYPES = {
  */
 export interface SeatReservation {
   id: number
-  flightId: number
+  scheduleId: number
   seatNum: number
   bookingStatus: number
   createTime?: string
@@ -45,8 +45,8 @@ export interface SeatReservation {
  * 座位预订列表类型（包含分页信息）
  */
 export interface SeatReservationList extends SeatReservation {
-  flightInfo?: string
-  aircraftName?: string
+  scheduleInfo?: string
+  airplaneName?: string
   routeInfo?: string
   departureTime?: string
   arrivalTime?: string
@@ -56,7 +56,7 @@ export interface SeatReservationList extends SeatReservation {
  * 座位预订查询参数类型
  */
 export interface SeatReservationQuery extends PageQuery {
-  flightId?: number
+  scheduleId?: number
   seatNum?: number
   bookingStatus?: number
   createTimeStart?: string
@@ -68,7 +68,7 @@ export interface SeatReservationQuery extends PageQuery {
  */
 export interface SeatReservationForm {
   id?: number
-  flightId: number
+  scheduleId: number
   seatNum: number
   bookingStatus: number
   createPerson?: string
@@ -78,10 +78,10 @@ export interface SeatReservationForm {
 /**
  * 航班选择项类型（用于下拉框）
  */
-export interface FlightOption {
+export interface ScheduleOption {
   value: number
   label: string
-  aircraftName?: string
+  airplaneName?: string
   routeInfo?: string
   departureTime?: string
   arrivalTime?: string

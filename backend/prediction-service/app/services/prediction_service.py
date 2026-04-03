@@ -130,9 +130,9 @@ class PredictionService:
                 weekday = row['Weekday']
                 predictions.append(PredictionItem(
                     prediction_date=row['Date'].date() if isinstance(row['Date'], pd.Timestamp) else row['Date'],
-                    predicted_passengers=int(row['Predicted_Passengers']),
-                    lower_bound=int(row['Lower_Bound']),
-                    upper_bound=int(row['Upper_Bound']),
+                    predicted_passengers=float(row['Predicted_Passengers']),
+                    lower_bound=float(row['Lower_Bound']),
+                    upper_bound=float(row['Upper_Bound']),
                     day_of_week=row['DayOfWeek'],
                     is_weekday=weekday < 5
                 ))
@@ -226,29 +226,45 @@ class PredictionService:
             update_progress(
                 TaskStage.DATA_LOADING,
                 10,
-                "正在加载月度数据...",
+                "正在加载日度数据...",
                 current_step="数据加载"
             )
 
-            processor = DataProcessor()
-            monthly_data = processor.load_monthly_data(str(data_file))
+            # 直接读取日度数据文件（支持bus_data.csv的日度格式）
+            import pandas as pd
+            daily_df = pd.read_csv(data_file)
 
-            # 阶段3: 数据处理
-            update_progress(
-                TaskStage.DATA_PROCESSING,
-                20,
-                "正在将月度数据转换为日度数据...",
-                current_step="数据处理"
-            )
+            # 验证数据格式
+            if 'Date' in daily_df.columns and 'Passengers' in daily_df.columns:
+                # 日度格式（bus_data.csv）
+                daily_df['Date'] = pd.to_datetime(daily_df['Date'])
+                daily_df = daily_df.sort_values('Date').reset_index(drop=True)
+                passenger_series = daily_df['Passengers']
+                logger.info(f"已加载日度数据: {len(passenger_series)} 条记录")
+            elif 'Month' in daily_df.columns and 'Passengers' in daily_df.columns:
+                # 月度格式（airline-passengers.csv）
+                processor = DataProcessor()
+                monthly_data = processor.load_monthly_data(str(data_file))
 
-            daily_data = processor.monthly_to_daily(
-                interpolation_method='cubic',
-                apply_effects=True,
-                apply_perturbation=True,
-                noise_level=0.08,
-                random_seed=42
-            )
-            passenger_series = daily_data['Passengers']
+                # 阶段3: 数据处理（月度转日度）
+                update_progress(
+                    TaskStage.DATA_PROCESSING,
+                    20,
+                    "正在将月度数据转换为日度数据...",
+                    current_step="数据处理"
+                )
+
+                daily_data = processor.monthly_to_daily(
+                    interpolation_method='cubic',
+                    apply_effects=True,
+                    apply_perturbation=True,
+                    noise_level=0.15,
+                    noise_type='adaptive',
+                    random_seed=42
+                )
+                passenger_series = daily_data['Passengers']
+            else:
+                raise ValueError(f"数据文件格式错误，需要包含(Date/Month)和Passengers列: {data_file}")
 
             # 阶段4: 参数优化
             update_progress(
@@ -496,11 +512,31 @@ class PredictionService:
         """同步执行训练（在线程池中运行）"""
         data_file = settings.data_file
 
-        # 加载和处理数据
-        processor = DataProcessor()
-        monthly_data = processor.load_monthly_data(str(data_file))
-        daily_data = processor.monthly_to_daily(interpolation_method='cubic')
-        passenger_series = daily_data['Passengers']
+        # 加载和处理数据（支持日度或月度格式）
+        import pandas as pd
+        df = pd.read_csv(data_file)
+
+        if 'Date' in df.columns and 'Passengers' in df.columns:
+            # 日度格式（bus_data.csv）
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df.sort_values('Date').reset_index(drop=True)
+            passenger_series = df['Passengers']
+            logger.info(f"已加载日度数据: {len(passenger_series)} 条记录")
+        elif 'Month' in df.columns and 'Passengers' in df.columns:
+            # 月度格式（airline-passengers.csv）
+            processor = DataProcessor()
+            monthly_data = processor.load_monthly_data(str(data_file))
+            daily_data = processor.monthly_to_daily(
+                interpolation_method='cubic',
+                apply_effects=True,
+                apply_perturbation=True,
+                noise_level=0.15,
+                noise_type='adaptive',
+                random_seed=42
+            )
+            passenger_series = daily_data['Passengers']
+        else:
+            raise ValueError(f"数据文件格式错误，需要包含(Date/Month)和Passengers列: {data_file}")
 
         # 创建训练器并自动寻找最优参数
         logger.info("自动寻找最优 ARIMA 参数...")

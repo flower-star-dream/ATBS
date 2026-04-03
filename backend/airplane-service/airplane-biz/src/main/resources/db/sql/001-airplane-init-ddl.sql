@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `atbs_schedule` (
   `create_person_id` bigint NOT NULL COMMENT '创建人 id',
   `update_person_id` bigint NOT NULL COMMENT '更新者 id',
   `deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除:0-未删除，1-已删除',
-  `vision` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
+  `version` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='atbs_航班班次';
 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `atbs_seat_reservation` (
   `update_time` datetime NOT NULL COMMENT '更新时间',
   `create_person_id` bigint NOT NULL COMMENT '创建人 id',
   `update_person_id` bigint NOT NULL COMMENT '更新者 id',
-  `vision` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
+  `version` int NOT NULL DEFAULT '1' COMMENT '乐观锁版本号',
   `deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除:0-未删除，1-已删除',
   `status` int NOT NULL COMMENT '预订状态',
   PRIMARY KEY (`id`)

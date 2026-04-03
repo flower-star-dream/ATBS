@@ -14,8 +14,8 @@
                             <Plus />
                         </el-icon>
                         <el-upload class="avatar-uploader" :show-file-list="false" :auto-upload="true"
-                            action="/api/mgmt/v1/common/user/upload" name="file"
-                            :headers="{ 'Authorization': employeeStore.token, 'X-Client-Type': 1 }"
+                            :action="uploadAction" name="file"
+                            :headers="uploadHeaders"
                             :on-success="uploadSuccess" accept=".jpg,.jpeg,.png,.gif" :before-upload="beforeUpload">
                             <div class="avatar-upload-overlay">
                                 <el-icon class="upload-icon">
@@ -66,13 +66,35 @@
 // 引入 Vue 相关 API
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { updateEmployeeInfoService } from '@/api/employee'
-import { useEmployeeStore } from '@/stores'
+import { useOAuth2Store, useEmployeeStore } from '@/stores'
 import type { EmployeeInfo } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Camera } from '@element-plus/icons-vue'
+import config from '@/config'
 
 // 定义响应式数据
+const oauth2Store = useOAuth2Store()
 const employeeStore = useEmployeeStore()
+
+/**
+ * 计算上传请求头
+ * 包含 Authorization (Bearer token) 和 X-Client-Type
+ */
+const uploadHeaders = computed(() => {
+  const token = oauth2Store.accessToken
+  return {
+    'Authorization': token ? `Bearer ${token}` : '',
+    'X-Client-Type': 1
+  }
+})
+
+/**
+ * 计算上传地址
+ * 使用配置中的 baseUrl 和 apiPrefix
+ */
+const uploadAction = computed(() => {
+  return `${config.baseUrl}/api/base/v1/common/file/upload`
+})
 const formRef = ref()
 // 提供初始值以避免null/undefined问题
 const employeeInfo = ref<EmployeeInfo>(employeeStore.employeeInfo || {

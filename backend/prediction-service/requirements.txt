@@ -21,6 +21,9 @@ pyyaml>=6.0
 # Nacos 服务注册
 nacos-sdk-python>=2.0.0,<3.0.0
 
+# 异步文件 I/O（用于任务持久化）
+aiofiles>=23.0.0
+
 # 可选依赖：用于加速计算
 # numba>=0.58.0
 

@@ -1,4 +1,4 @@
-import { oauth2Request } from '@/utils/request'
+import { oauth2Request, userRequest } from '@/utils/request'
 import type { OAuth2TokenResponse } from '@/types'
 import config from '@/config'
 
@@ -8,6 +8,40 @@ import config from '@/config'
  * 注意：使用标准 OAuth2 端点路径（无前缀），如 /oauth/token, /userinfo
  * 注意：使用 oauth2Request 实例，直接返回原始响应数据
  */
+
+/**
+ * 重置密码请求参数
+ */
+export interface ResetPasswordREQ {
+  /** 用户ID */
+  id: string
+  /** 旧密码（已加密） */
+  oldPwd: string
+  /** 新密码（已加密） */
+  newPwd: string
+  /** 确认新密码（已加密） */
+  confirmPwd: string
+}
+
+/**
+ * 重置密码
+ * 调用 auth-service 的 UserController 重置密码接口
+ * @param data 重置密码请求参数
+ * @returns 重置响应
+ */
+export const resetPassword = (data: ResetPasswordREQ): Promise<void> => {
+  return userRequest.post('/api/all/v1/auth/user/resetPwd', data)
+}
+
+/**
+ * 用户登出
+ * 调用 OAuth2Controller 的令牌撤销接口
+ * @param token 要撤销的访问令牌
+ * @param tokenTypeHint 令牌类型提示（access_token/refresh_token）
+ */
+export const logout = (token: string, tokenTypeHint?: string): Promise<void> => {
+  return revokeToken(token, tokenTypeHint)
+}
 
 /**
  * 验证重定向地址有效性

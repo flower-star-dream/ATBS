@@ -85,6 +85,15 @@ class PredictionProperties(BaseModel):
     confidence_level: float = Field(default=0.95, ge=0.0, le=1.0, alias="confidence-level", description="默认置信水平")
 
 
+class TrainingProperties(BaseModel):
+    """训练任务配置 - 对应 training.*"""
+    max_workers: int = Field(default=2, ge=1, le=8, alias="max-workers", description="训练任务最大工作线程数")
+    cpu_limit_percent: int = Field(default=50, ge=10, le=100, alias="cpu-limit-percent", description="训练任务CPU使用限制百分比")
+    use_process_pool: bool = Field(default=True, alias="use-process-pool", description="是否使用进程池隔离训练任务")
+    batch_size: int = Field(default=5, ge=1, le=20, alias="batch-size", description="参数搜索批处理大小")
+    yield_interval: float = Field(default=0.1, ge=0.01, le=1.0, alias="yield-interval", description="训练任务让出控制权间隔(秒)")
+
+
 class AutoRetrainProperties(BaseModel):
     """自动重训配置 - 对应 auto-retrain.*"""
     enabled: bool = Field(default=True, description="是否启用自动重训")
@@ -92,7 +101,7 @@ class AutoRetrainProperties(BaseModel):
     retrain_cycle_days: int = Field(default=7, ge=1, le=30, alias="retrain-cycle-days", description="重训周期（天）")
     order_service_name: str = Field(default="order-service", alias="order-service-name", description="Order服务名")
     data_file: str = Field(default="bus_data.csv", alias="data-file", description="数据文件名")
-    max_data_rows: int = Field(default=145, ge=50, le=500, alias="max-data-rows", description="最大数据行数（滚动窗口）")
+    max_data_rows: int = Field(default=4383, ge=50, le=10000, alias="max-data-rows", description="最大数据行数（滚动窗口），默认值为airline-passengers.csv月度数据转换为日度数据后的长度")
     use_grid_search: bool = Field(default=True, alias="use-grid-search", description="是否使用网格搜索")
     scoring: str = Field(default="mape", description="评分指标")
 
@@ -389,6 +398,7 @@ class AppConfig(BaseSettings):
     spring: SpringProperties = Field(default_factory=SpringProperties, description="Spring 配置")
     server: ServerProperties = Field(default_factory=ServerProperties, description="服务器配置")
     prediction: PredictionProperties = Field(default_factory=PredictionProperties, description="预测服务配置")
+    training: TrainingProperties = Field(default_factory=TrainingProperties, description="训练任务配置")
     auto_retrain: AutoRetrainProperties = Field(default_factory=AutoRetrainProperties, alias="auto-retrain", description="自动重训配置")
     jwt: JwtProperties = Field(default_factory=JwtProperties, description="JWT 配置")
     cors: CorsProperties = Field(default_factory=CorsProperties, description="CORS 配置")

@@ -49,7 +49,7 @@
       <el-tag type="info" size="small">
         {{
           row.scheduleInfo ||
-          `${row.airplaneName || "未知列车"} - ${row.routeName || "未知线路"}`
+          `${row.airplaneName || "未知飞机"} - ${row.routeName || "未知线路"}`
         }}
       </el-tag>
     </template>
@@ -146,7 +146,7 @@ const handleScheduleRemoteSearch = async (query) => {
     // 更新班次列表
     scheduleOptions.value = (response.records || []).map(scheduler => ({
       value: scheduler.id,
-      label: (scheduler.airplaneName || '未知列车') + ' - ' + (scheduler.routeName || '未知线路'),
+      label: (scheduler.airplaneName || '未知飞机') + ' - ' + (scheduler.routeName || '未知线路'),
     }));
   } catch (error) {
     ElMessage.error('获取班次列表失败');

@@ -1,0 +1,33 @@
+{
+  "task_id": "TRAIN-20260402155633-FF35559B",
+  "status": "completed",
+  "user_id": "1",
+  "priority": 0,
+  "created_at": "2026-04-02T15:56:33.509550+08:00",
+  "started_at": "2026-04-02T15:56:33.512235+08:00",
+  "completed_at": "2026-04-02T15:57:31.848733+08:00",
+  "result": {
+    "status": "success",
+    "message": "模型训练成功",
+    "order": [
+      5,
+      1,
+      0
+    ],
+    "aic": null,
+    "bic": null,
+    "training_time": "2026-04-02T15:57:31.848225+08:00",
+    "validation": null,
+    "data_length": 0
+  },
+  "error_info": null,
+  "progress_stage": "completed",
+  "progress_percent": 100,
+  "progress_message": "训练完成！",
+  "current_step": "完成",
+  "completed_steps": 7,
+  "estimated_remaining_seconds": 180,
+  "has_checkpoint": false,
+  "checkpoint_path": null,
+  "last_checkpoint_time": null
+}

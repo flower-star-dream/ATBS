@@ -6,9 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import top.flowerstardream.atbs.tools.interfaces.TtlContextInterceptor;
+import top.flowerstardream.base.properties.CorsProperties;
 
 /**
  * @Author: 花海
@@ -21,6 +23,20 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Resource
     private TtlContextInterceptor ttlContextInterceptor;
+
+    @Resource
+    private CorsProperties corsProperties;
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns(corsProperties.getAllowOrigins())
+                .allowedMethods(corsProperties.getAllowMethods())
+                .allowedHeaders(corsProperties.getAllowHeaders())
+                .allowCredentials(corsProperties.getAllowCredentials())
+                .exposedHeaders(corsProperties.getExposeHeaders())
+                .maxAge(corsProperties.getMaxAge());
+    }
 
     /**
      * 添加ttl上下文拦截器

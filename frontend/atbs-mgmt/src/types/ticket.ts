@@ -39,7 +39,7 @@ export interface TicketPageQueryREQ {
   pageSize: number
   orderId?: string
   realName?: string
-  flightNumber?: string
+  scheduleNumber?: string
   startStation?: string
   endStation?: string
   status?: number
@@ -59,7 +59,7 @@ export interface Ticket {
   idCard: string
   seatNumber: string
   seatType: string
-  flightNumber: string
+  scheduleNumber: string
   startStation: string
   endStation: string
   startTime: string
@@ -90,7 +90,7 @@ export interface TicketDetail extends Ticket {
 export interface TicketStatusUpdateREQ {
   id: string
   status: TicketStatus
-  flightId?: string
+  scheduleId?: string
   startStationId?: string
   endStationId?: string
 }

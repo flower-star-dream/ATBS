@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 
 import static top.flowerstardream.atbs.auth.common.AuthExceptionEnum.*;
 import static top.flowerstardream.atbs.auth.common.AuthRedisPrefixConstant.*;
+import static top.flowerstardream.atbs.auth.common.AuthRedisPrefixConstant.OAUTH2_BLACKLIST_PREFIX;
 import static top.flowerstardream.atbs.auth.common.WxConstant.*;
 import static top.flowerstardream.atbs.tools.constants.CommonConstant.*;
 import static top.flowerstardream.atbs.tools.constants.JwtClaimsConstant.*;
@@ -579,9 +580,10 @@ public class OAuth2ServiceImpl implements IOAuth2Service {
         String refreshToken = JwtUtil.getToken(tokenConfig.getSecretKey(), tokenConfig.getRefreshTime(), refreshClaims);
 
         // 保存token至redis
-        String redisKey = USER_TOKEN_PREFIX + userId;
-        redisUtils.set(redisKey, ACCESS_TOKEN_PREFIX + accessToken, tokenConfig.getRefreshTime(), TimeUnit.SECONDS);
-        redisUtils.set(redisKey, REFRESH_PREFIX + refreshToken, tokenConfig.getRefreshTime(), TimeUnit.SECONDS);
+        String accessRedisKey = USER_ACCESS_TOKEN_PREFIX + userId;
+        String refreshRedisKey = USER_REFRESH_TOKEN_PREFIX + userId;
+        redisUtils.set(accessRedisKey, accessToken, tokenConfig.getAccessTokenTtl(), TimeUnit.SECONDS);
+        redisUtils.set(refreshRedisKey, refreshToken, tokenConfig.getRefreshTokenTtl(), TimeUnit.SECONDS);
 
         return TokenRES.builder()
             .accessToken(accessToken)

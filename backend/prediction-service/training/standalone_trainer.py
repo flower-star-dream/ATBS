@@ -47,20 +47,25 @@ def set_low_priority():
         
         # 设置进程优先级（使用psutil的跨平台API）
         try:
-            # psutil的nice()方法是跨平台的
-            if hasattr(process, 'nice'):
-                # 获取当前nice值
-                current_nice = process.nice()
-                # 设置更高的nice值（更低的优先级）
-                if isinstance(current_nice, int):
-                    # Linux/Mac
+            # Windows和Linux/Mac使用不同的API
+            if sys.platform == 'win32':
+                # Windows: 使用优先级类常量
+                # psutil 在 Windows 上 nice() 返回的是优先级类名称字符串
+                try:
+                    # 尝试设置为 BELOW_NORMAL_PRIORITY_CLASS
+                    # 注意：psutil 的 Windows 版本可能不支持直接设置 nice
+                    # 使用 IDLE_PRIORITY_CLASS (4) 或 BELOW_NORMAL_PRIORITY_CLASS (16384)
+                    import psutil._pswindows as pswin
+                    process.nice(pswin.IDLE_PRIORITY_CLASS)
+                    logger.info("设置进程优先级: IDLE")
+                except AttributeError:
+                    # 如果无法访问 _pswindows，跳过设置
+                    logger.warning("Windows 优先级设置不可用")
+            else:
+                # Linux/Mac: 使用 nice 值
+                if hasattr(process, 'nice'):
                     process.nice(10)
                     logger.info("设置进程优先级: nice=10")
-                else:
-                    # Windows - psutil返回的是优先级类
-                    # 使用IDLE_PRIORITY_CLASS (64) 或 BELOW_NORMAL_PRIORITY_CLASS (16384)
-                    process.nice(psutil.IDLE_PRIORITY_CLASS)
-                    logger.info("设置进程优先级: IDLE")
         except Exception as e:
             logger.warning(f"设置进程优先级失败: {e}")
             

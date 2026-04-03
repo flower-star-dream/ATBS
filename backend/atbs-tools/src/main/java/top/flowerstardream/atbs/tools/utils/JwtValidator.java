@@ -12,8 +12,7 @@ import top.flowerstardream.base.utils.JwtUtil;
 import top.flowerstardream.base.utils.RedisUtils;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static top.flowerstardream.atbs.tools.constants.RedisPrefixConstant.ACCESS_TOKEN_PREFIX;
-import static top.flowerstardream.atbs.tools.constants.RedisPrefixConstant.USER_TOKEN_PREFIX;
+import static top.flowerstardream.atbs.tools.constants.RedisPrefixConstant.*;
 import static top.flowerstardream.base.constant.CommonConstant.*;
 
 /**
@@ -72,7 +71,10 @@ public class JwtValidator {
             log.warn("JWT解析失败");
             return ValidateResult.builder().valid(false).msg("Token无效").build();
         }
+        JwtProperties.TokenConfig tokenConfig = prop.getTokens().get(clientName);
+        log.debug("tokenConfig: {}", tokenConfig);
         int verify = JwtUtil.verifyToken(claims, prop.getTokens().get(clientName).getRefreshTime());
+        log.info("JWT验证结果: {}", verify);
         if (verify != -1 && verify != 0) {
             return ValidateResult.builder().valid(false).msg("Token过期").build();
         }
@@ -86,7 +88,7 @@ public class JwtValidator {
         username = claims.get(usernameClaim, String.class);
 
         // 5. Redis 存在性
-        String redisKey = USER_TOKEN_PREFIX + userId;
+        String redisKey = USER_ACCESS_TOKEN_PREFIX + userId;
         String redisToken;
         try {
             redisToken = redis.get(redisKey);
@@ -96,11 +98,11 @@ public class JwtValidator {
         }
         if (isBlank(redisToken)) {
             return ValidateResult.builder().valid(false).msg("Token未找到").build();
-        } else {
-            redisToken = redisToken.substring(ACCESS_TOKEN_PREFIX.length());
-            if (!redisToken.equals(rawToken)) {
-                return ValidateResult.builder().valid(false).msg("Token已过期").build();
-            }
+        }
+
+        // 6. 黑名单校验
+        if (redis.hasKey(OAUTH2_BLACKLIST_PREFIX + redisToken)) {
+            return ValidateResult.builder().valid(false).msg("Token已注销").build();
         }
 
         return ValidateResult.builder().valid(true).clientType(clientType).userId(userId).username(username).token(rawToken).build();

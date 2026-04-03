@@ -27,7 +27,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: ['http://localhost:8080', 'https://atbs.flower-star-dream.top'],
+        target: ['http://localhost:8080'],
         changeOrigin: true,
         // 保持/api前缀以匹配网关路由规则
         // 确保所有/api开头的请求都被正确代理
@@ -36,10 +36,10 @@ export default defineConfig({
         rewrite: (path) => path // 保持原路径不变
       }
     },
-    '/atbs/assets': {
-        target: 'https://atbs.flower-star-dream.top/atbs',
+    '/assets': {
+        target: 'http://localhost:9000',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/atbs\/assets/, '/atbs/assets'),
+        rewrite: path => path.replace(/^\/assets/, '/assets'),
         configure: (proxy, options) => {
           proxy.on('proxyRes', (res) => {
             // 把错误的 text/html 改成 image/png

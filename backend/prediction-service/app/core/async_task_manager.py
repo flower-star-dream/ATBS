@@ -122,31 +122,41 @@ class AsyncTaskManager:
         self._worker_tasks: List[asyncio.Task] = []
         self._persistence = task_persistence
         self._progress_callbacks: Dict[str, Callable] = {}
-        
+        self._task_executor: Optional[Callable] = None  # 任务执行器回调
+
         # 设置信号处理
         self._setup_signal_handlers()
+
+    def set_task_executor(self, executor: Callable):
+        """
+        设置任务执行器
+
+        Args:
+            executor: 任务执行函数，接收 task_id 作为参数
+        """
+        self._task_executor = executor
+        logger.info("任务执行器已设置")
 
     def _setup_signal_handlers(self):
         """设置信号处理器，用于优雅关闭和崩溃恢复"""
         def signal_handler(signum, frame):
             logger.warning(f"接收到信号 {signum}，准备保存任务状态...")
-            # 创建新的事件循环来执行保存
             try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(self._emergency_save())
-                loop.close()
+                # 直接使用同步方法保存，避免事件循环问题
+                self._emergency_save_sync()
             except Exception as e:
                 logger.error(f"紧急保存失败: {e}")
             finally:
                 sys.exit(1)
-        
+
         # 注册信号处理器
         signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
 
+
+
     async def _emergency_save(self):
-        """紧急保存任务状态"""
+        """紧急保存任务状态（异步版本）"""
         logger.info("执行紧急保存...")
         try:
             # 将所有任务标记为需要恢复
@@ -156,34 +166,57 @@ class AsyncTaskManager:
                     # 保存检查点
                     if task.checkpoint:
                         await self._persistence.save_checkpoint(task.task_id, task.checkpoint)
-            
+
             # 保存任务队列
             persistent_tasks = [t.to_persistent_task() for t in self.tasks.values()]
             await self._persistence.save_task_queue(persistent_tasks)
-            
+
             logger.info("紧急保存完成")
         except Exception as e:
             logger.error(f"紧急保存失败: {e}")
+
+    def _emergency_save_sync(self):
+        """紧急保存任务状态（同步版本，用于信号处理）"""
+        logger.info("执行同步紧急保存...")
+        try:
+            # 将所有任务标记为需要恢复
+            for task in self.tasks.values():
+                if task.status == TaskStatus.PROCESSING:
+                    task.status = TaskStatus.PENDING
+
+            # 同步保存任务队列
+            persistent_tasks = [t.to_persistent_task() for t in self.tasks.values()]
+            self._persistence.save_task_queue_sync(persistent_tasks)
+
+            logger.info("同步紧急保存完成")
+        except Exception as e:
+            logger.error(f"同步紧急保存失败: {e}")
 
     async def start(self):
         """启动任务管理器"""
         if self._running:
             return
-        
+
         logger.info("=" * 60)
         logger.info("启动异步任务管理器")
         logger.info("=" * 60)
-        
+
         self._running = True
-        
+
         # 尝试恢复任务
         await self._recover_tasks()
-        
+
+        # 检查任务执行器是否设置
+        if self._task_executor:
+            logger.info("任务执行器已设置")
+        else:
+            logger.warning("任务执行器未设置！恢复的任务将无法执行")
+
         # 启动工作进程
         for i in range(self._max_workers):
             worker = asyncio.create_task(self._worker_loop(i))
             self._worker_tasks.append(worker)
-        
+
         logger.info(f"任务管理器已启动，工作进程数: {self._max_workers}")
 
     async def stop(self):
@@ -305,8 +338,15 @@ class AsyncTaskManager:
         return task
 
     async def get_task(self, task_id: str) -> Optional[TrainingTask]:
-        """获取任务信息"""
-        async with self._lock:
+        """获取任务信息（使用细粒度锁，快速返回）"""
+        # 使用非阻塞方式快速获取任务
+        try:
+            async with asyncio.timeout(0.1):  # 100ms超时
+                async with self._lock:
+                    return self.tasks.get(task_id)
+        except asyncio.TimeoutError:
+            # 如果获取锁超时，尝试无锁读取（可能读到稍旧的数据）
+            logger.warning(f"获取任务 {task_id} 锁超时，尝试直接读取")
             return self.tasks.get(task_id)
 
     async def update_task_status(
@@ -351,6 +391,10 @@ class AsyncTaskManager:
         estimated_remaining_seconds: Optional[int] = None
     ):
         """更新任务进度"""
+        task = None
+        need_persist = False
+
+        # 快速获取任务引用并更新内存状态
         async with self._lock:
             task = self.tasks.get(task_id)
             if not task:
@@ -389,7 +433,14 @@ class AsyncTaskManager:
 
             # 定期持久化（每10%或每阶段）
             if percent and (percent % 10 == 0 or stage):
+                need_persist = True
+
+        # 在锁外执行持久化，避免阻塞其他操作
+        if need_persist and task:
+            try:
                 await self._persistence.save_task(task.to_persistent_task())
+            except Exception as e:
+                logger.error(f"持久化任务 {task_id} 失败: {e}")
 
         # 触发进度回调
         if task_id in self._progress_callbacks:
@@ -419,27 +470,55 @@ class AsyncTaskManager:
     async def _worker_loop(self, worker_id: int):
         """工作进程主循环"""
         logger.info(f"工作进程 {worker_id} 已启动")
-        
+
         while self._running:
             try:
+                logger.debug(f"工作进程 {worker_id}: 等待任务...")
                 # 获取任务
                 priority, created_at, task_id = await self._task_queue.get()
-                
+                logger.info(f"工作进程 {worker_id}: 获取到任务 {task_id}")
+
                 task = await self.get_task(task_id)
-                if not task or task.status not in [TaskStatus.PENDING, TaskStatus.RECOVERING]:
+                if not task:
+                    logger.warning(f"工作进程 {worker_id}: 任务 {task_id} 不存在")
                     continue
-                
+
+                if task.status not in [TaskStatus.PENDING, TaskStatus.RECOVERING]:
+                    logger.info(f"工作进程 {worker_id}: 任务 {task_id} 状态为 {task.status.value}，跳过执行")
+                    continue
+
+                logger.info(f"工作进程 {worker_id}: 开始执行任务 {task_id}，当前状态: {task.status.value}")
+
                 # 更新状态为处理中
                 await self.update_task_status(task_id, TaskStatus.PROCESSING)
-                
-                # 执行训练（这里需要调用具体的训练函数）
-                # 实际执行由外部传入的训练函数处理
-                
+
+                # 执行训练任务
+                if self._task_executor:
+                    try:
+                        logger.info(f"工作进程 {worker_id}: 调用任务执行器执行任务 {task_id}")
+                        await self._task_executor(task_id)
+                        logger.info(f"工作进程 {worker_id}: 任务 {task_id} 执行完成")
+                    except Exception as e:
+                        logger.error(f"工作进程 {worker_id}: 执行任务 {task_id} 失败: {e}", exc_info=True)
+                        # 更新任务状态为失败
+                        await self.update_task_status(
+                            task_id,
+                            TaskStatus.FAILED,
+                            error_info={
+                                "error_type": type(e).__name__,
+                                "error_message": str(e),
+                                "timestamp": datetime.now(self._beijing_tz).isoformat()
+                            }
+                        )
+                else:
+                    logger.error(f"工作进程 {worker_id}: 未设置任务执行器，无法执行任务 {task_id}")
+
             except asyncio.CancelledError:
+                logger.info(f"工作进程 {worker_id}: 收到取消信号")
                 break
             except Exception as e:
-                logger.error(f"工作进程 {worker_id} 异常: {e}")
-        
+                logger.error(f"工作进程 {worker_id} 异常: {e}", exc_info=True)
+
         logger.info(f"工作进程 {worker_id} 已停止")
 
     async def cancel_task(self, task_id: str) -> bool:

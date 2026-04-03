@@ -108,12 +108,12 @@ class ARIMAPredictor:
         conf_int_lower = np.maximum(conf_int.iloc[:, 0], 0)
         conf_int_upper = np.maximum(conf_int.iloc[:, 1], 0)
 
-        # 构建结果 DataFrame
+        # 构建结果 DataFrame（保留小数，单位为千人）
         result = pd.DataFrame({
             'Date': prediction_dates,
-            'Predicted_Passengers': np.round(forecast_mean.values).astype(int),
-            'Lower_Bound': np.round(conf_int_lower.values).astype(int),
-            'Upper_Bound': np.round(conf_int_upper.values).astype(int),
+            'Predicted_Passengers': forecast_mean.values,
+            'Lower_Bound': conf_int_lower.values,
+            'Upper_Bound': conf_int_upper.values,
             'Confidence_Level': f"{(1 - alpha) * 100:.0f}%"
         })
 

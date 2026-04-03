@@ -36,6 +36,8 @@ import top.flowerstardream.base.state.StateMachine;
 import top.flowerstardream.base.utils.StateRouteParams;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -468,13 +470,29 @@ public class TicketServiceImpl extends ServiceImpl<TicketMapper, TicketEO> imple
     @Override
     public List<TicketRES> getByOrderId(Long id) {
         if (id == null || id <= 0) {
-            PARAM_ERROR.toException();
+            throw PARAM_ERROR.toException();
         }
         LambdaQueryWrapper<TicketEO> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(TicketEO::getOrderId, id);
         queryWrapper.orderByAsc(TicketEO::getId);
         List<TicketEO> ticketList = ticketMapper.selectList(queryWrapper);
         return convertToRES(ticketList);
+    }
+
+    /**
+     * 获取某日乘客数
+     * @param date 日期
+     * @return 乘客数
+     */
+    @Override
+    public BigDecimal getDailyPassengers(String date){
+        if (date == null || date.isEmpty() || !date.matches("yyyy-MM-dd")) {
+            throw PARAM_ERROR.toException();
+        }
+        LocalDateTime startTime = LocalDateTime.parse(date + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        LocalDateTime endTime = LocalDateTime.parse(date + " 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        Long count = ticketMapper.countByStartTimeBetween(startTime, endTime);
+        return new BigDecimal(count/1000.0);
     }
 }
 

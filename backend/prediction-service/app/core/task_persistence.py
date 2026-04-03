@@ -10,21 +10,42 @@ import logging
 import asyncio
 import shutil
 import tempfile
-import threading
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional, List, Any, Tuple
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 import aiofiles
+import platform
 
-# 跨平台文件锁支持
-try:
+# 跨平台文件锁实现
+if platform.system() == 'Windows':
+    import msvcrt
+    
+    def _lock_file(fd, exclusive=True):
+        """Windows 文件锁实现"""
+        mode = msvcrt.LK_LOCK if exclusive else msvcrt.LK_RLCK
+        msvcrt.locking(fd.fileno(), mode, os.path.getsize(fd.name) if os.path.exists(fd.name) else 1)
+    
+    def _unlock_file(fd):
+        """Windows 文件解锁实现"""
+        try:
+            msvcrt.locking(fd.fileno(), msvcrt.LK_UNLCK, os.path.getsize(fd.name) if os.path.exists(fd.name) else 1)
+        except (OSError, ValueError):
+            pass
+else:
     import fcntl
-    HAS_FCNTL = True
-except ImportError:
-    HAS_FCNTL = False
-    # Windows 上使用 threading.Lock 作为替代
-    _file_locks: Dict[str, threading.Lock] = {}
+    
+    def _lock_file(fd, exclusive=True):
+        """Unix/Linux 文件锁实现"""
+        operation = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+        fcntl.flock(fd.fileno(), operation)
+    
+    def _unlock_file(fd):
+        """Unix/Linux 文件解锁实现"""
+        try:
+            fcntl.flock(fd.fileno(), fcntl.LOCK_UN)
+        except (OSError, ValueError):
+            pass
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +137,7 @@ class PersistentTask:
     completed_at: Optional[str] = None
     result: Optional[Dict[str, Any]] = None
     error_info: Optional[Dict[str, Any]] = None
-
+    
     # 进度信息
     progress_stage: str = "initializing"
     progress_percent: int = 0
@@ -124,7 +145,7 @@ class PersistentTask:
     current_step: str = ""
     completed_steps: int = 0
     estimated_remaining_seconds: Optional[int] = None
-
+    
     # 检查点信息
     has_checkpoint: bool = False
     checkpoint_path: Optional[str] = None
@@ -219,30 +240,15 @@ class TaskPersistenceManager:
     
     def _acquire_file_lock(self):
         """获取文件锁（用于进程间同步）"""
-        if HAS_FCNTL:
-            # Unix/Linux 系统使用 fcntl
-            lock_path = self.lock_file
-            lock_fd = open(lock_path, 'w')
-            fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX)
-            return lock_fd
-        else:
-            # Windows 系统使用 threading.Lock
-            lock_path = str(self.lock_file)
-            if lock_path not in _file_locks:
-                _file_locks[lock_path] = threading.Lock()
-            _file_locks[lock_path].acquire()
-            return lock_path
+        lock_path = self.lock_file
+        lock_fd = open(lock_path, 'w')
+        _lock_file(lock_fd, exclusive=True)
+        return lock_fd
     
-    def _release_file_lock(self, lock_handle):
+    def _release_file_lock(self, lock_fd):
         """释放文件锁"""
-        if HAS_FCNTL:
-            # Unix/Linux 系统
-            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
-            lock_handle.close()
-        else:
-            # Windows 系统
-            if lock_handle in _file_locks:
-                _file_locks[lock_handle].release()
+        _unlock_file(lock_fd)
+        lock_fd.close()
     
     async def save_task_queue(self, tasks: List[PersistentTask]) -> bool:
         """
@@ -284,11 +290,54 @@ class TaskPersistenceManager:
             except Exception as e:
                 logger.error(f"保存任务队列失败: {e}", exc_info=True)
                 return False
-    
+
+    def save_task_queue_sync(self, tasks: List[PersistentTask]) -> bool:
+        """
+        同步保存任务队列（用于信号处理时）
+
+        Args:
+            tasks: 任务列表
+
+        Returns:
+            是否成功
+        """
+        try:
+            # 确保目录存在
+            self.queue_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # 获取文件锁
+            lock_fd = self._acquire_file_lock()
+
+            try:
+                # 准备数据
+                data = {
+                    'version': '1.0',
+                    'saved_at': datetime.now(timezone(timedelta(hours=8))).isoformat(),
+                    'tasks': [task.to_dict() for task in tasks]
+                }
+
+                # 同步写入临时文件
+                temp_file = self.queue_file.with_suffix('.tmp')
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+
+                # 原子性重命名
+                temp_file.replace(self.queue_file)
+
+                logger.info(f"任务队列已同步保存，共 {len(tasks)} 个任务")
+                return True
+
+            finally:
+                self._release_file_lock(lock_fd)
+
+        except Exception as e:
+            logger.error(f"同步保存任务队列失败: {e}", exc_info=True)
+            return False
+
     async def load_task_queue(self) -> List[PersistentTask]:
         """
         加载任务队列
-        
+
         Returns:
             任务列表
         """

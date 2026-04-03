@@ -20,9 +20,9 @@ class PredictionItem(BaseModel):
     model_config = {"populate_by_name": True}
 
     prediction_date: date = Field(description="日期")
-    predicted_passengers: int = Field(description="预测客流量")
-    lower_bound: int = Field(description="置信区间下限")
-    upper_bound: int = Field(description="置信区间上限")
+    predicted_passengers: float = Field(description="预测客流量(千人)")
+    lower_bound: float = Field(description="置信区间下限(千人)")
+    upper_bound: float = Field(description="置信区间上限(千人)")
     day_of_week: str = Field(description="星期")
     is_weekday: bool = Field(description="是否是工作日")
 

@@ -61,7 +61,7 @@ export interface Order {
  */
 export interface OrderTicket {
   id: string
-  flightNumber: string
+  scheduleNumber: string
   departure: string
   arrival: string
   departureTime: string

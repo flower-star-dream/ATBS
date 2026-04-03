@@ -47,7 +47,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { resetPasswordService } from '@/api/employee'
+import { resetPassword } from '@/api/oauth2'
 import type { ResetPasswordForm } from '@/types'
 import { useEmployeeStore } from '@/stores/employee'
 import { useRouter } from 'vue-router'
@@ -142,12 +142,12 @@ const handleResetPassword = async () => {
   try {
     await resetPasswordRef.value.validate()
     loading.value = true
-    resetPasswordForm.oldPwd = md5ToHex(strToBase64(resetPasswordForm.oldPwd))
-    resetPasswordForm.newPwd = md5ToHex(strToBase64(resetPasswordForm.newPwd))
-    resetPasswordForm.confirmPwd = md5ToHex(strToBase64(resetPasswordForm.confirmPwd))
+    resetPasswordForm.oldPwd = resetPasswordForm.oldPwd
+    resetPasswordForm.newPwd = resetPasswordForm.newPwd
+    resetPasswordForm.confirmPwd = resetPasswordForm.confirmPwd
 
     // 调用重置密码接口
-    await resetPasswordService(resetPasswordForm)
+    await resetPassword(resetPasswordForm)
     ElMessage.success('密码重置成功，请重新登录')
     resetPasswordRef.value.resetFields()
     employeeStore.logoutAction()

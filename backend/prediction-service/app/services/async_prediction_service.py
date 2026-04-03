@@ -43,6 +43,15 @@ class AsyncPredictionService:
         self._model_lock = asyncio.Lock()
         self._load_model()
 
+    async def initialize(self):
+        """初始化服务，设置任务执行器"""
+        # 设置任务执行器，用于执行恢复的任务
+        # 使用lambda包装以确保self正确绑定
+        async_task_manager.set_task_executor(
+            lambda task_id: self._execute_training_task(task_id)
+        )
+        logger.info("异步预测服务初始化完成，任务执行器已设置")
+
     def _load_model(self):
         """加载已训练的模型"""
         model_file = settings.model_path / "arima_model.pkl"
@@ -125,9 +134,9 @@ class AsyncPredictionService:
                 weekday = row['Weekday']
                 predictions.append(PredictionItem(
                     prediction_date=row['Date'].date() if isinstance(row['Date'], pd.Timestamp) else row['Date'],
-                    predicted_passengers=int(row['Predicted_Passengers']),
-                    lower_bound=int(row['Lower_Bound']),
-                    upper_bound=int(row['Upper_Bound']),
+                    predicted_passengers=float(row['Predicted_Passengers']),
+                    lower_bound=float(row['Lower_Bound']),
+                    upper_bound=float(row['Upper_Bound']),
                     day_of_week=row['DayOfWeek'],
                     is_weekday=weekday < 5
                 ))
@@ -163,11 +172,8 @@ class AsyncPredictionService:
         Returns:
             任务创建响应
         """
-        # 创建任务
+        # 创建任务（任务会自动添加到队列，由工作进程执行）
         task = await async_task_manager.create_task(user_id=user_id, priority=priority)
-
-        # 启动训练协程
-        asyncio.create_task(self._execute_training_task(task.task_id))
 
         return TrainingTaskCreateResponse(
             task_id=task.task_id,
@@ -178,7 +184,124 @@ class AsyncPredictionService:
 
     async def _execute_training_task(self, task_id: str):
         """
-        执行训练任务
+        执行训练任务（使用独立进程）
+
+        Args:
+            task_id: 任务ID
+        """
+        logger.info(f"=" * 60)
+        logger.info(f"开始执行任务 {task_id}")
+        logger.info(f"=" * 60)
+
+        task = await async_task_manager.get_task(task_id)
+        if not task:
+            logger.error(f"任务 {task_id} 不存在")
+            return
+
+        logger.info(f"任务 {task_id}: 当前状态 {task.status.value}")
+
+        # 更新状态为处理中
+        await async_task_manager.update_task_status(task_id, TaskStatus.PROCESSING)
+        logger.info(f"任务 {task_id}: 状态已更新为 PROCESSING")
+
+        try:
+            # 阶段1: 初始化
+            logger.info(f"任务 {task_id}: 阶段1 - 初始化")
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.INITIALIZING,
+                percent=5,
+                current_step="初始化",
+                message="正在初始化训练环境..."
+            )
+
+            # 检查数据文件
+            data_file = settings.data_file
+            logger.info(f"任务 {task_id}: 检查数据文件 {data_file}")
+            if not data_file.exists():
+                raise FileNotFoundError(f"数据文件不存在: {data_file}")
+            logger.info(f"任务 {task_id}: 数据文件存在")
+
+            # 阶段2: 启动独立训练进程
+            logger.info(f"任务 {task_id}: 阶段2 - 启动独立训练进程")
+            await async_task_manager.update_task_progress(
+                task_id=task_id,
+                stage=TaskStage.MODEL_TRAINING,
+                percent=10,
+                current_step="模型训练",
+                message="启动独立训练进程...",
+                estimated_remaining_seconds=180
+            )
+
+            # 使用独立进程进行训练
+            from app.core.training_process import independent_trainer
+
+            logger.info(f"任务 {task_id}: 调用 independent_trainer.start_training()")
+            logger.info(f"任务 {task_id}: 数据文件={data_file}, 输出目录={settings.model_path}")
+
+            result = await independent_trainer.start_training(
+                data_file=str(data_file),
+                model_output_dir=str(settings.model_path),
+                progress_callback=lambda p: logger.info(f"[训练进度] {p}")
+            )
+
+            logger.info(f"任务 {task_id}: 独立训练进程返回结果: success={result.success}")
+
+            if result.success:
+                logger.info(f"任务 {task_id}: 训练成功")
+
+                # 更新进度到完成
+                await async_task_manager.update_task_progress(
+                    task_id=task_id,
+                    stage=TaskStage.COMPLETED,
+                    percent=100,
+                    current_step="完成",
+                    message="训练完成！"
+                )
+
+                # 构建训练结果
+                training_result = {
+                    'status': 'success',
+                    'message': '模型训练成功',
+                    'order': result.model_info.get('order', [5, 1, 0]),
+                    'aic': result.model_info.get('aic'),
+                    'bic': result.model_info.get('bic'),
+                    'training_time': self._get_beijing_time().isoformat(),
+                    'validation': result.model_info.get('validation'),
+                    'data_length': 0  # 独立进程中无法获取
+                }
+
+                # 更新任务状态为完成
+                await async_task_manager.update_task_status(
+                    task_id=task_id,
+                    status=TaskStatus.COMPLETED,
+                    result=training_result
+                )
+
+                # 重新加载模型
+                async with self._model_lock:
+                    self._load_model()
+
+            else:
+                logger.error(f"任务 {task_id}: 训练失败 - {result.error}")
+                raise RuntimeError(result.error or "训练失败")
+
+        except Exception as e:
+            logger.error(f"训练任务 {task_id} 失败: {e}", exc_info=True)
+            error_info = {
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "timestamp": self._get_beijing_time().isoformat()
+            }
+            await async_task_manager.update_task_status(
+                task_id=task_id,
+                status=TaskStatus.FAILED,
+                error_info=error_info
+            )
+
+    async def _execute_training_task_old(self, task_id: str):
+        """
+        执行训练任务（旧版本，保留用于参考）
 
         Args:
             task_id: 任务ID
@@ -196,6 +319,11 @@ class AsyncPredictionService:
             await async_task_manager.save_checkpoint(task_id, checkpoint)
 
         try:
+            # 检查数据文件
+            data_file = settings.data_file
+            if not data_file.exists():
+                raise FileNotFoundError(f"数据文件不存在: {data_file}")
+
             # 阶段1: 初始化
             await async_task_manager.update_task_progress(
                 task_id=task_id,
@@ -204,11 +332,6 @@ class AsyncPredictionService:
                 current_step="初始化",
                 message="正在初始化训练环境..."
             )
-
-            # 检查数据文件
-            data_file = settings.data_file
-            if not data_file.exists():
-                raise FileNotFoundError(f"数据文件不存在: {data_file}")
 
             # 阶段2: 数据加载
             await async_task_manager.update_task_progress(

@@ -15,15 +15,15 @@
       :label-width="labelWidth"
       label-position="right"
     >
-      <!-- 列车选择 -->
+      <!-- 飞机选择 -->
       <el-form-item
-        label="列车"
+        label="飞机"
         prop="airplaneId"
         :required="true"
       >
         <el-select
           v-model="formData.airplaneId"
-          placeholder="请选择列车"
+          placeholder="请选择飞机"
           :disabled="isFieldDisabled('airplaneId')"
           :clearable="true"
           style="width: 100%"
@@ -71,15 +71,15 @@
         </el-select>
       </el-form-item>
 
-      <!-- 列车长 -->
+      <!-- 机长 -->
       <el-form-item
-        label="列车长"
+        label="机长"
         prop="conductor"
         :required="true"
       >
         <el-input
           v-model="formData.conductor"
-          placeholder="请输入列车长姓名"
+          placeholder="请输入机长姓名"
           :disabled="isFieldDisabled('conductor')"
           maxlength="10"
           show-word-limit
@@ -208,7 +208,7 @@ const props = defineProps({
       endTime: ''
     })
   },
-  // 列车选项列表
+  // 飞机选项列表
   airplaneOptions: {
     type: Array,
     default: () => []
@@ -222,11 +222,11 @@ const props = defineProps({
   rules: {
     type: Object,
     default: () => ({
-      airplaneId: [{ required: true, message: '请选择列车', trigger: 'change' }],
+      airplaneId: [{ required: true, message: '请选择飞机', trigger: 'change' }],
       routeId: [{ required: true, message: '请选择线路', trigger: 'change' }],
       conductor: [
-        { required: true, message: '请输入列车长姓名', trigger: 'blur' },
-        { min: 2, max: 10, message: '列车长姓名长度在 2 到 10 个字符', trigger: 'blur' }
+        { required: true, message: '请输入机长姓名', trigger: 'blur' },
+        { min: 2, max: 10, message: '机长姓名长度在 2 到 10 个字符', trigger: 'blur' }
       ],
       availableTickets: [
         { required: true, message: '请输入余票数', trigger: 'blur' },
@@ -358,14 +358,14 @@ const isFieldDisabled = (fieldName) => {
  * @returns {string} 预览文本
  */
 const getPreviewText = () => {
-  const airplaneName = props.airplaneOptions.find(item => item.value === props.formData.airplaneId)?.label || '未知列车'
+  const airplaneName = props.airplaneOptions.find(item => item.value === props.formData.airplaneId)?.label || '未知飞机'
   const routeName = props.routeOptions.find(item => item.value === props.formData.routeId)?.label || '未知线路'
   return `${airplaneName} - ${routeName}`
 }
 
 /**
- * 处理列车选择变化
- * @param {number} value - 选中的列车ID
+ * 处理飞机选择变化
+ * @param {number} value - 选中的飞机ID
  */
 const handleAirplaneChange = (value) => {
   emit('airplane-change', value)

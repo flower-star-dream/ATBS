@@ -15,6 +15,6 @@ CREATE TABLE IF NOT EXISTS `atbs_order` (
   `create_person_id` bigint NOT NULL COMMENT '创建人 id（通常为 0，表示用户自主绑定）',
   `update_person_id` bigint NOT NULL COMMENT '更新者 id',
   `deleted` tinyint NOT NULL COMMENT '逻辑删除:0-未删除，1-已删除（解绑）',
-  `vision` int NOT NULL COMMENT '乐观锁版本号',
+  `version` int NOT NULL COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='atbs_订单';

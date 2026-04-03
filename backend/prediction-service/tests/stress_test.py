@@ -14,7 +14,7 @@ import concurrent.futures
 class StressTest:
     """压力测试类"""
 
-    def __init__(self, base_url: str = "http://localhost:8080"):
+    def __init__(self, base_url: str = "http://103.115.43.55:8080"):
         self.base_url = base_url
         self.results: List[Dict] = []
 

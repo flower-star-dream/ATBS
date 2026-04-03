@@ -20,11 +20,14 @@ import top.flowerstardream.atbs.tools.config.FeignClientConfig;
  * @Date: 2025/10/14/21:36
  * @Description: 用户服务启动入口
  */
-@SpringBootApplication(scanBasePackages = {
-        "top.flowerstardream.atbs.user",
-        "top.flowerstardream.atbs.tools"
-})
-@ComponentScan(excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = FeignClientConfig.class))
+@SpringBootApplication
+@ComponentScan(
+        basePackages = {
+                "top.flowerstardream.atbs.user",
+                "top.flowerstardream.atbs.tools"
+        },
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = FeignClientConfig.class)
+)
 @EnableDiscoveryClient //开启服务注册与发现
 @EnableFeignClients
 @EnableTransactionManagement //开启注解方式的事务管理

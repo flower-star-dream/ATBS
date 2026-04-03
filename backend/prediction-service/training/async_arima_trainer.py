@@ -1,6 +1,6 @@
 """
 异步 ARIMA 模型训练模块
-支持检查点保存和恢复，完全异步化实现
+支持检查点保存和恢复，完全异步化实现，带资源限制
 """
 import os
 import sys
@@ -35,6 +35,7 @@ except ImportError:
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.data_processor import DataProcessor
 from app.core.task_persistence import TrainingCheckpoint
+from app.core.resource_manager import resource_governor, training_executor
 
 logger = logging.getLogger(__name__)
 
@@ -269,7 +270,7 @@ class AsyncARIMATrainer:
         max_q: int = 5
     ) -> Tuple[int, int, int]:
         """
-        使用异步AIC方法寻找最优参数
+        使用异步AIC方法寻找最优参数（带资源治理）
         """
         logger.info("使用异步AIC搜索方法...")
 
@@ -284,44 +285,58 @@ class AsyncARIMATrainer:
         best_aic = float('inf')
         best_params = (0, 0, 0)
         total = len(param_combinations)
+        batch_size = resource_governor.batch_size
 
-        logger.info(f"总共 {total} 个参数组合需要评估")
+        logger.info(f"总共 {total} 个参数组合需要评估，批处理大小: {batch_size}")
 
-        # 串行评估（异步执行）
-        for i, (p, d, q) in enumerate(param_combinations):
+        # 分批处理，避免阻塞事件循环
+        for batch_start in range(0, total, batch_size):
+            batch_end = min(batch_start + batch_size, total)
+            batch = param_combinations[batch_start:batch_end]
+
+            # 在资源治理下执行批次
+            await resource_governor.acquire()
             try:
-                # 异步执行模型拟合
-                model = ARIMA(data, order=(p, d, q))
-                fitted = await asyncio.to_thread(model.fit)
-                aic = fitted.aic
+                for i, (p, d, q) in enumerate(batch):
+                    try:
+                        # 使用进程池执行CPU密集型任务
+                        def fit_model():
+                            model = ARIMA(data, order=(p, d, q))
+                            return model.fit()
 
-                if aic < best_aic:
-                    best_aic = aic
-                    best_params = (p, d, q)
-                    logger.info(f"发现更优参数: p={p}, d={d}, q={q}, AIC={aic:.2f}")
+                        fitted = await training_executor.submit(fit_model)
+                        aic = fitted.aic
 
-                # 每10%保存检查点
-                if (i + 1) % max(1, total // 10) == 0:
-                    progress = 35 + (i + 1) / total * 24  # 35% - 59%
-                    await self._save_checkpoint(
-                        stage='parameter_optimization',
-                        percent=int(progress),
-                        current_step='参数优化中',
-                        message=f'已评估 {i+1}/{total} 个参数组合',
-                        grid_search_progress={
-                            'evaluated_count': i + 1,
-                            'total_count': total,
-                            'best_params_so_far': best_params,
-                            'best_score_so_far': best_aic
-                        }
-                    )
+                        if aic < best_aic:
+                            best_aic = aic
+                            best_params = (p, d, q)
+                            logger.info(f"发现更优参数: p={p}, d={d}, q={q}, AIC={aic:.2f}")
+
+                    except Exception as e:
+                        logger.warning(f"参数 ({p},{d},{q}) 评估失败: {e}")
+                        continue
+
+                # 批次完成后保存检查点
+                evaluated = batch_end
+                progress = 35 + evaluated / total * 24  # 35% - 59%
+                await self._save_checkpoint(
+                    stage='parameter_optimization',
+                    percent=int(progress),
+                    current_step='参数优化中',
+                    message=f'已评估 {evaluated}/{total} 个参数组合',
+                    grid_search_progress={
+                        'evaluated_count': evaluated,
+                        'total_count': total,
+                        'best_params_so_far': best_params,
+                        'best_score_so_far': best_aic
+                    }
+                )
 
                 # 让出控制权
-                await asyncio.sleep(0)
+                await resource_governor.yield_control()
 
-            except Exception as e:
-                logger.warning(f"参数 ({p},{d},{q}) 评估失败: {e}")
-                continue
+            finally:
+                resource_governor.release()
 
         self.p, self.d, self.q = best_params
         logger.info(f"最优参数: p={self.p}, d={self.d}, q={self.q}, AIC={best_aic:.2f}")
@@ -377,9 +392,12 @@ class AsyncARIMATrainer:
                 message=f'开始训练 ARIMA({self.p},{self.d},{self.q}) 模型'
             )
 
-            # 异步训练模型
-            self.model = ARIMA(train_data, order=(self.p, self.d, self.q))
-            self.fitted_model = await asyncio.to_thread(self.model.fit)
+            # 异步训练模型（使用进程池隔离）
+            def train_model():
+                self.model = ARIMA(train_data, order=(self.p, self.d, self.q))
+                return self.model.fit()
+
+            self.fitted_model = await training_executor.submit(train_model)
 
             logger.info("模型训练完成")
             logger.info(f"AIC: {self.fitted_model.aic:.2f}")
@@ -428,11 +446,11 @@ class AsyncARIMATrainer:
             message='正在验证模型性能'
         )
 
-        # 异步预测
-        predictions = await asyncio.to_thread(
-            self.fitted_model.forecast,
-            steps=len(val_data)
-        )
+        # 异步预测（使用进程池隔离）
+        def forecast_model():
+            return self.fitted_model.forecast(steps=len(val_data))
+
+        predictions = await training_executor.submit(forecast_model)
 
         # 计算评估指标
         mae = mean_absolute_error(val_data, predictions)

@@ -41,7 +41,7 @@ const serviceConfig = {
 const oauth2Config: Record<string, OAuth2Config> = {
   // 开发环境 OAuth2 配置
   development: {
-    authBaseUrl: 'http://localhost:8080',
+    authBaseUrl: 'http://103.115.43.55:8080',
     clientId: 'mgmt-client',
     clientSecret: 'mgmt-secret',
     scope: 'openid profile read write'
@@ -67,8 +67,8 @@ const oauth2Config: Record<string, OAuth2Config> = {
  * 如需修改配置，只需修改此对象中的对应值
  */
 const defaultConfig: Config = {
-  baseUrl: 'http://localhost:8080',
-  ossUrl: 'http://localhost:9000/atbs',
+  baseUrl: 'http://103.115.43.55:8080',
+  ossUrl: 'http://103.115.43.55:9000',
   apiPrefix: '/api/mgmt/v1',
   timeout: 10000,
   mock: false,
@@ -93,7 +93,7 @@ const envConfigs: Record<string, Partial<Config>> = {
   // 测试环境特定配置
   staging: {
     baseUrl: 'https://atbs.flower-star-dream.top',
-    ossUrl: 'https://atbs.flower-star-dream.top/atbs',
+    ossUrl: 'http://103.115.43.55:9000',
     mock: false,
     debug: true,
     title: '飞机订票系统-后端管理 - 测试环境',
@@ -104,7 +104,7 @@ const envConfigs: Record<string, Partial<Config>> = {
   // 生产环境特定配置
   production: {
     baseUrl: 'https://atbs.flower-star-dream.top',
-    ossUrl: 'https://atbs.flower-star-dream.top/atbs',
+    ossUrl: 'http://103.115.43.55:9000',
     timeout: 30000,
     mock: false,
     debug: false,

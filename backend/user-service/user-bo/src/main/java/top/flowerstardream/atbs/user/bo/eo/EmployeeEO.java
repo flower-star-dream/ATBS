@@ -29,7 +29,7 @@ public class EmployeeEO extends BizBaseEO<BaseStatus> implements StatusAble<Base
 
     @TableId(value = "id", type = IdType.INPUT)
     @TableField(value = "id", fill = FieldFill.INSERT)
-    protected Long id;
+    private Long id;
 
     // 用户名
     @TableField("username")

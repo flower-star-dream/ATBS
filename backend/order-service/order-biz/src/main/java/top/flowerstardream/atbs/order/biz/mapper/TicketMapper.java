@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import top.flowerstardream.atbs.order.bo.eo.TicketEO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -18,4 +19,7 @@ public interface TicketMapper extends BaseMapper<TicketEO> {
 
     @Select("select status, count(*) from atbs_ticket group by status")
     List<Map<String, Object>> count();
+
+    @Select("select count(*) from atbs_ticket where start_time between #{startTime} and #{endTime}")
+    Long countByStartTimeBetween(LocalDateTime startTime, LocalDateTime endTime);
 }

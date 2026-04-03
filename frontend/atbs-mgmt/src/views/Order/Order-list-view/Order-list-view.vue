@@ -553,7 +553,7 @@ const handleViewDetail = async (row) => {
       price: ticket.money,
       status: ticket.status, // 车票状态
       passengerName: ticket.realName
-      // 删除座位类型字段，因为列车没有这个字段
+      // 删除座位类型字段，因为飞机没有这个字段
     })) : []
 
     currentOrder.value.order = detail

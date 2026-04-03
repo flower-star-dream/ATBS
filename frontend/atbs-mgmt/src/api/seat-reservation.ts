@@ -59,20 +59,20 @@ export const batchUpdateSeatStatus = (data: Partial<SeatReservationChangeStatusR
 
 /**
  * 检查座位是否可用
- * @param flightId 航班ID
+ * @param scheduleId 航班ID
  * @param seatNum 座位号
  * @param excludeId 排除的座位预订ID（编辑时用于排除自身）
  * @returns 检查结果
  */
-export const checkSeatAvailability = (flightId: number, seatNum: number, excludeId?: number): Promise<boolean> => {
+export const checkSeatAvailability = (scheduleId: number, seatNum: number, excludeId?: number): Promise<boolean> => {
   return airplaneRequest.get('/seatReservation/check-availability', {
-    params: { flightId, seatNum, excludeId }
+    params: { scheduleId, seatNum, excludeId }
   })
 }
 
 /**
  * 获取座位状态统计
- * @param flightId 航班ID（可选）
+ * @param scheduleId 航班ID（可选）
  * @returns 座位状态统计信息
  */
 export const getStatus = (): Promise<StatusCount[]> => {

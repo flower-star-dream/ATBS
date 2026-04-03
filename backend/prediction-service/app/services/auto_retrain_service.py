@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Callable
 import httpx
 import pandas as pd
 import numpy as np
@@ -41,6 +41,7 @@ class DataRollingStorage:
     def initialize_from_original(self, original_file: Path) -> bool:
         """
         从原始数据文件初始化滚动数据文件
+        将月度数据转换为日度数据并保存，此过程仅在初始化阶段执行一次
 
         Args:
             original_file: 原始数据文件路径
@@ -53,39 +54,49 @@ class DataRollingStorage:
                 logger.error(f"原始数据文件不存在: {original_file}")
                 return False
 
-            # 读取原始数据
+            logger.info(f"开始初始化滚动数据文件，从原始数据: {original_file}")
+
+            # 读取原始月度数据
             df = pd.read_csv(original_file)
 
             # 预处理：将月度数据转换为日度数据
             from utils.data_processor import DataProcessor
             processor = DataProcessor()
+
+            # 转换列为正确的类型（在赋值前完成转换）
+            df['Month'] = pd.to_datetime(df['Month'])
             processor.original_data = df.copy()
 
-            # 转换列为正确的类型
-            df['Month'] = pd.to_datetime(df['Month'])
-
-            # 生成日度数据（不使用随机扰动，保持数据一致性）
+            # 生成日度数据（使用随机扰动）
             daily_data = processor.monthly_to_daily(
                 interpolation_method='cubic',
                 apply_effects=True,
-                apply_perturbation=False,  # 初始化时不添加扰动
-                noise_level=0.0,
+                apply_perturbation=True,  # 启用随机扰动
+                noise_level=0.15,         # 使用中等噪声水平
+                noise_type='adaptive',    # 自适应噪声
                 random_seed=42
             )
 
-            # 按月份聚合回月度数据格式（用于存储）
-            daily_data['YearMonth'] = daily_data['Date'].dt.to_period('M')
-            monthly_aggregated = daily_data.groupby('YearMonth')['Passengers'].sum().reset_index()
-            monthly_aggregated['YearMonth'] = monthly_aggregated['YearMonth'].dt.strftime('%Y-%m')
-            monthly_aggregated.columns = ['Month', 'Passengers']
+            # 确保数据目录存在
+            self.data_file.parent.mkdir(parents=True, exist_ok=True)
 
-            # 确保不超过最大行数
-            if len(monthly_aggregated) > self.max_rows:
-                monthly_aggregated = monthly_aggregated.tail(self.max_rows)
+            # 直接保存日度数据到bus_data.csv（不再聚合回月度）
+            # 只保留Date和Passengers两列，确保格式统一
+            daily_data_to_save = daily_data[['Date', 'Passengers']].copy()
 
-            # 保存到滚动数据文件
-            monthly_aggregated.to_csv(self.data_file, index=False)
-            logger.info(f"已初始化滚动数据文件: {self.data_file}, 共 {len(monthly_aggregated)} 条记录")
+            # 确保不超过最大行数（滚动窗口）
+            if len(daily_data_to_save) > self.max_rows:
+                daily_data_to_save = daily_data_to_save.tail(self.max_rows)
+                logger.info(f"数据超过最大行数限制，保留最近 {self.max_rows} 条记录")
+
+            # 保存日度数据到滚动数据文件
+            daily_data_to_save.to_csv(self.data_file, index=False)
+
+            logger.info(f"已初始化滚动数据文件: {self.data_file}")
+            logger.info(f"  - 原始月度数据: {len(df)} 条")
+            logger.info(f"  - 生成日度数据: {len(daily_data_to_save)} 条")
+            logger.info(f"  - 日期范围: {daily_data_to_save['Date'].min()} 至 {daily_data_to_save['Date'].max()}")
+
             return True
 
         except Exception as e:
@@ -95,6 +106,7 @@ class DataRollingStorage:
     def append_daily_data(self, date: str, passengers: int) -> bool:
         """
         添加日度数据到滚动存储
+        直接追加日度数据，保持日度格式
 
         Args:
             date: 日期字符串 (YYYY-MM-DD)
@@ -104,34 +116,35 @@ class DataRollingStorage:
             是否成功添加
         """
         try:
-            # 读取现有数据
+            # 读取现有数据（日度格式）
             if self.data_file.exists():
                 df = pd.read_csv(self.data_file)
+                # 确保列名正确
+                if 'Date' not in df.columns:
+                    logger.error(f"数据文件格式错误，缺少Date列: {self.data_file}")
+                    return False
             else:
-                df = pd.DataFrame(columns=['Month', 'Passengers'])
+                df = pd.DataFrame(columns=['Date', 'Passengers'])
 
-            # 将日度数据转换为月度格式（按月份聚合）
-            date_obj = pd.to_datetime(date)
-            month_key = date_obj.strftime('%Y-%m')
-
-            # 检查是否已存在该月份
-            if month_key in df['Month'].values:
-                # 更新该月份的累计值
-                df.loc[df['Month'] == month_key, 'Passengers'] += passengers
+            # 检查是否已存在该日期
+            if date in df['Date'].values:
+                # 更新该日期的值
+                df.loc[df['Date'] == date, 'Passengers'] = passengers
+                logger.debug(f"更新已有日期数据: {date}")
             else:
-                # 添加新月份
-                new_row = pd.DataFrame({'Month': [month_key], 'Passengers': [passengers]})
+                # 添加新日期
+                new_row = pd.DataFrame({'Date': [date], 'Passengers': [passengers]})
                 df = pd.concat([df, new_row], ignore_index=True)
 
             # 滚动窗口：如果超过最大行数，删除最前面的数据
             while len(df) > self.max_rows:
                 removed = df.iloc[0]
                 df = df.iloc[1:].reset_index(drop=True)
-                logger.debug(f"滚动删除旧数据: {removed['Month']}")
+                logger.debug(f"滚动删除旧数据: {removed['Date']}")
 
             # 保存数据
             df.to_csv(self.data_file, index=False)
-            logger.info(f"已添加日度数据: {date}, 当前共 {len(df)} 条记录")
+            logger.info(f"已添加日度数据: {date}, 客流量: {passengers}, 当前共 {len(df)} 条记录")
             return True
 
         except Exception as e:
@@ -190,7 +203,7 @@ class OrderServiceClient:
                 return None
 
             # 调用Order服务接口
-            url = f"{service_url}/api/order/v1/statistics/daily-passengers"
+            url = f"{service_url}/api/internal/v1/order/statistics/daily-passengers"
             params = {"date": date}
 
             response = await self.client.get(url, params=params)
@@ -198,7 +211,7 @@ class OrderServiceClient:
 
             data = response.json()
             if data.get("code") == 200:
-                return data.get("data", {}).get("passengers")
+                return data.get("data")
             else:
                 logger.warning(f"获取日度数据失败: {data.get('message')}")
                 return None
@@ -459,6 +472,7 @@ class AutoRetrainService:
     def _run_training_with_progress(self, task_id: str, progress_callback: Optional[Callable] = None) -> Dict:
         """
         执行训练并更新进度
+        直接从bus_data.csv读取日度数据进行训练，不再进行月度到日度的转换
 
         Args:
             task_id: 任务ID
@@ -483,24 +497,30 @@ class AutoRetrainService:
             if not settings.bus_data_file.exists():
                 raise FileNotFoundError(f"数据文件不存在: {settings.bus_data_file}")
 
-            # 阶段2: 数据加载
-            update_progress(TaskStage.DATA_LOADING, 10, "正在加载数据...")
+            # 阶段2: 数据加载（直接读取日度数据）
+            update_progress(TaskStage.DATA_LOADING, 10, "正在加载日度数据...")
 
-            from utils.data_processor import DataProcessor
-            processor = DataProcessor()
-            monthly_data = processor.load_monthly_data(str(settings.bus_data_file))
+            # 直接读取日度数据文件，不再进行月度到日度的转换
+            daily_df = pd.read_csv(settings.bus_data_file)
 
-            # 阶段3: 数据处理
-            update_progress(TaskStage.DATA_PROCESSING, 20, "正在处理数据...")
-            daily_data = processor.monthly_to_daily(
-                interpolation_method='cubic',
-                apply_effects=True,
-                apply_perturbation=True,
-                noise_level=0.15,
-                noise_type='adaptive',
-                random_seed=42
-            )
-            passenger_series = daily_data['Passengers']
+            # 验证数据格式
+            if 'Date' not in daily_df.columns or 'Passengers' not in daily_df.columns:
+                raise ValueError(f"数据文件格式错误，需要包含Date和Passengers列: {settings.bus_data_file}")
+
+            # 转换日期列
+            daily_df['Date'] = pd.to_datetime(daily_df['Date'])
+
+            # 按日期排序
+            daily_df = daily_df.sort_values('Date').reset_index(drop=True)
+
+            # 提取客流数据序列
+            passenger_series = daily_df['Passengers']
+
+            logger.info(f"已加载日度数据: {len(passenger_series)} 条记录")
+            logger.info(f"日期范围: {daily_df['Date'].min()} 至 {daily_df['Date'].max()}")
+
+            # 阶段3: 数据验证（跳过月度到日度的转换）
+            update_progress(TaskStage.DATA_PROCESSING, 20, "正在验证数据...")
 
             # 阶段4: 参数优化
             update_progress(TaskStage.PARAMETER_OPTIMIZATION, 35,
