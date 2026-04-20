@@ -11,7 +11,7 @@ import traceback
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.responses import JSONResponse
 
 # 添加项目路径
@@ -214,16 +214,7 @@ async def request_logging_middleware(request: Request, call_next):
 # 添加 TraceId 中间件
 app.add_middleware(TraceIdMiddleware)
 
-# 配置 CORS - 从配置类读取跨域配置
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_allow_origins,
-    allow_methods=settings.cors_allow_methods,
-    allow_headers=settings.cors_allow_headers,
-    expose_headers=settings.cors_expose_headers,
-    allow_credentials=settings.cors_allow_credentials,
-    max_age=settings.cors_max_age,
-)
+
 
 # 注册路由
 app.include_router(prediction.router, prefix="/api/mgmt/v1/prediction", tags=["预测服务"])

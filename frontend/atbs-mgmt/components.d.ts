@@ -7,6 +7,8 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AirplaneIcon: typeof import('./src/components/Icon/AirplaneIcon.vue')['default']
+    AirportIcon: typeof import('./src/components/Icon/AirportIcon.vue')['default']
     DialogForm: typeof import('./src/components/DialogForm/DialogForm.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
@@ -49,6 +51,7 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EmployeeIcon: typeof import('./src/components/Icon/EmployeeIcon.vue')['default']
+    ExampleIcon: typeof import('./src/components/Icon/exampleIcon.vue')['default']
     ListPage: typeof import('./src/components/ListPage/ListPage.vue')['default']
     OrderIcon: typeof import('./src/components/Icon/OrderIcon.vue')['default']
     PassengerIcon: typeof import('./src/components/Icon/PassengerIcon.vue')['default']
@@ -59,7 +62,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     ScheduleIcon: typeof import('./src/components/Icon/ScheduleIcon.vue')['default']
     SeatReservationIcon: typeof import('./src/components/Icon/SeatReservationIcon.vue')['default']
-    TrainIcon: typeof import('./src/components/Icon/TrainIcon.vue')['default']
     TransportIcon: typeof import('./src/components/Icon/TransportIcon.vue')['default']
   }
   export interface ComponentCustomProperties {

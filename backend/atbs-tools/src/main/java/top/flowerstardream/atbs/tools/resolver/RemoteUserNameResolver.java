@@ -5,14 +5,11 @@ import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Component;
-import top.flowerstardream.atbs.tools.client.AuthClient;
 import top.flowerstardream.atbs.tools.interfaces.IUserResolveService;
 import top.flowerstardream.base.handler.MyMetaObjectHandler;
 import top.flowerstardream.base.resolver.UserNameResolver;
@@ -36,7 +33,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RemoteUserNameResolver implements UserNameResolver {
 
-    private final IUserResolveService iUserResolveService;
+    @Resource
+    private IUserResolveService userResolveServiceImpl;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -49,6 +47,7 @@ public class RemoteUserNameResolver implements UserNameResolver {
 
     @Override
     public Map<Long, String> resolve(Collection<Long> userIds) {
+        log.debug("开始解析用户名，用户ID：{}", userIds);
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -77,7 +76,8 @@ public class RemoteUserNameResolver implements UserNameResolver {
         
         // 2. 缺失的远程调用用户服务
         if (!missingIds.isEmpty()) {
-            Map<Long, String> fromRemote = iUserResolveService.batchGetNames(new ArrayList<>(missingIds)).getData();
+            log.debug("开始远程调用用户服务，用户ID：{}", missingIds);
+            Map<Long, String> fromRemote = userResolveServiceImpl.batchGetNames(new ArrayList<>(missingIds)).getData();
             result.putAll(fromRemote);
             
             // 3. 异步写入本地Redis
@@ -91,6 +91,7 @@ public class RemoteUserNameResolver implements UserNameResolver {
         if (data == null || data.isEmpty()) {
             return;
         }
+        log.debug("开始异步写入Redis，数据：{}", data);
 
         CompletableFuture.runAsync(() -> {
             try {

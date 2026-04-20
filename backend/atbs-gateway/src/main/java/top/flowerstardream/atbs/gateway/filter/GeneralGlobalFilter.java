@@ -62,7 +62,10 @@ public class GeneralGlobalFilter implements GlobalFilter {
 
         if (isWhitelisted || isOptions) {
             log.info("【网关】请求被白名单放行或为OPTIONS请求");
-            return chain.filter(exchange);
+            ServerHttpRequest mutatedRequest = request.mutate()
+                .header(TRACE_ID, traceId)
+                .build();
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
         }
 
         log.info("【网关】请求未被白名单匹配，进入JWT校验流程");

@@ -47,11 +47,18 @@ COPY airplane-service/airplane-common/pom.xml airplane-service/airplane-common/
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
     mvn install -N -B -Drevision=release-1.0.0
 
-# 下载依赖（只处理 auth-boot，依赖从私库拉取）
-RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn dependency:go-offline -B -pl auth-service/auth-boot -Drevision=release-1.0.0
+# 复制 atbs-tools 源码
+COPY atbs-tools/src/ atbs-tools/src/
 
-# 复制 auth-service 源码（只构建这个模块）
+# 先安装 atbs-tools 到本地仓库（确保本地修改覆盖私库版本）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn clean install -DskipTests -pl atbs-tools -B -Drevision=release-1.0.0
+
+# 下载依赖（处理 auth-boot 及其依赖）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn dependency:go-offline -B -pl auth-service/auth-boot -am -Drevision=release-1.0.0
+
+# 复制 auth-service 源码
 COPY auth-service/auth-api/src/ auth-service/auth-api/src/
 COPY auth-service/auth-ao/src/ auth-service/auth-ao/src/
 COPY auth-service/auth-biz/src/ auth-service/auth-biz/src/
@@ -59,9 +66,9 @@ COPY auth-service/auth-bo/src/ auth-service/auth-bo/src/
 COPY auth-service/auth-boot/src/ auth-service/auth-boot/src/
 COPY auth-service/auth-common/src/ auth-service/auth-common/src/
 
-# 构建（只构建 auth-boot，依赖从私库拉取）
+# 构建（构建 auth-boot，atbs-tools 已安装到本地仓库）
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn clean package -DskipTests -pl auth-service/auth-boot -B -Drevision=release-1.0.0
+    mvn clean package -DskipTests -pl auth-service/auth-boot -am -B -Drevision=release-1.0.0
 
 # 阶段二：运行阶段
 FROM eclipse-temurin:17-jre-alpine

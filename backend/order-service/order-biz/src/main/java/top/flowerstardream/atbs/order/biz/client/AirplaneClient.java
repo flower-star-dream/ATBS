@@ -13,7 +13,7 @@ import java.util.List;
  * @Date: 2025/11/11/16:06
  * @Description: 航空服务Feign客户端
  */
-@FeignClient(name = "atbs-airplane", path = "/api/internal/v1/airplane")
+@FeignClient(name = "airplane-service", path = "/api/internal/v1/airplane")
 public interface AirplaneClient {
 
     /**

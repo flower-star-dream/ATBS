@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import * as CryptoJS from 'crypto-js'
 import {
   exchangeCodeForToken,
   refreshToken as refreshTokenApi,
@@ -80,11 +81,16 @@ export const useOAuth2Store = defineStore('oauth2', () => {
    * @param verifier Code Verifier
    * @returns Code Challenge
    */
-  const generateCodeChallenge = async (verifier: string): Promise<string> => {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(verifier)
-    const digest = await window.crypto.subtle.digest('SHA-256', data)
-    return base64URLEncode(new Uint8Array(digest))
+  const generateCodeChallenge = (verifier: string): string => {
+    // 使用 crypto-js 进行 SHA-256 哈希，兼容 HTTP 环境
+    const hash = CryptoJS.SHA256(verifier)
+    const wordArray = hash
+    // 将 WordArray 转换为 Uint8Array
+    const bytes = new Uint8Array(wordArray.sigBytes)
+    for (let i = 0; i < wordArray.sigBytes; i++) {
+      bytes[i] = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff
+    }
+    return base64URLEncode(bytes)
   }
 
   /**
@@ -111,11 +117,11 @@ export const useOAuth2Store = defineStore('oauth2', () => {
     if (!isValid) {
       throw new Error('重定向地址验证失败，请检查配置')
     }
-    
+
     const { oauth2 } = config
     const state = generateState()
     const codeVerifier = generateCodeVerifier()
-    const codeChallenge = await generateCodeChallenge(codeVerifier)
+    const codeChallenge = generateCodeChallenge(codeVerifier)
 
     // 保存 state 和 codeVerifier 用于后续验证
     sessionStorage.setItem('oauth2_state', state)

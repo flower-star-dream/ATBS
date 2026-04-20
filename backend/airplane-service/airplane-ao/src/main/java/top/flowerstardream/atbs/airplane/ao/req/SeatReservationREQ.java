@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.flowerstardream.base.state.BaseStatus;
 
 import java.io.Serializable;
 
@@ -31,6 +32,6 @@ public class SeatReservationREQ implements Serializable {
     private Integer seatNum;
 
     @Schema(description = "预订状态")
-    private Integer bookingStatus;
+    private BaseStatus bookingStatus;
 
 }

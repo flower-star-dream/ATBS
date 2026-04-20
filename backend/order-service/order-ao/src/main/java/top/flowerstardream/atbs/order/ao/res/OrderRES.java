@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.flowerstardream.atbs.order.common.enums.OrderStatus;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -32,7 +33,7 @@ public class OrderRES implements Serializable {
      * 订单状态
      */
     @Schema(description = "订单状态")
-    private Integer status;
+    private OrderStatus status;
 
     /**
      * 订单总价

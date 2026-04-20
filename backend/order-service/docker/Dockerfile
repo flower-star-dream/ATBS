@@ -47,11 +47,18 @@ COPY airplane-service/airplane-common/pom.xml airplane-service/airplane-common/
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
     mvn install -N -B -Drevision=release-1.0.0
 
-# 下载依赖（只处理 order-boot，依赖从私库拉取）
-RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn dependency:go-offline -B -pl order-service/order-boot -Drevision=release-1.0.0
+# 复制 atbs-tools 源码
+COPY atbs-tools/src/ atbs-tools/src/
 
-# 复制 order-service 源码（只构建这个模块）
+# 先安装 atbs-tools 到本地仓库（确保本地修改覆盖私库版本）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn clean install -DskipTests -pl atbs-tools -B -Drevision=release-1.0.0
+
+# 下载依赖（处理 order-boot 及其依赖）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn dependency:go-offline -B -pl order-service/order-boot -am -Drevision=release-1.0.0
+
+# 复制 order-service 源码
 COPY order-service/order-api/src/ order-service/order-api/src/
 COPY order-service/order-ao/src/ order-service/order-ao/src/
 COPY order-service/order-biz/src/ order-service/order-biz/src/
@@ -59,9 +66,9 @@ COPY order-service/order-bo/src/ order-service/order-bo/src/
 COPY order-service/order-boot/src/ order-service/order-boot/src/
 COPY order-service/order-common/src/ order-service/order-common/src/
 
-# 构建（只构建 order-boot，依赖从私库拉取）
+# 构建（构建 order-boot，atbs-tools 已安装到本地仓库）
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn clean package -DskipTests -pl order-service/order-boot -B -Drevision=release-1.0.0
+    mvn clean package -DskipTests -pl order-service/order-boot -am -B -Drevision=release-1.0.0
 
 # 阶段二：运行阶段
 FROM eclipse-temurin:17-jre-alpine

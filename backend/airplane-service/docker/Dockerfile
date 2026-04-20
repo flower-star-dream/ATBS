@@ -47,11 +47,18 @@ COPY airplane-service/airplane-common/pom.xml airplane-service/airplane-common/
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
     mvn install -N -B -Drevision=release-1.0.0
 
-# 下载依赖（只处理 airplane-boot，依赖从私库拉取）
-RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn dependency:go-offline -B -pl airplane-service/airplane-boot -Drevision=release-1.0.0
+# 复制 atbs-tools 源码
+COPY atbs-tools/src/ atbs-tools/src/
 
-# 复制 airplane-service 源码（只构建这个模块）
+# 先安装 atbs-tools 到本地仓库（确保本地修改覆盖私库版本）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn clean install -DskipTests -pl atbs-tools -B -Drevision=release-1.0.0
+
+# 下载依赖（处理 airplane-boot 及其依赖）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn dependency:go-offline -B -pl airplane-service/airplane-boot -am -Drevision=release-1.0.0
+
+# 复制 airplane-service 源码
 COPY airplane-service/airplane-api/src/ airplane-service/airplane-api/src/
 COPY airplane-service/airplane-ao/src/ airplane-service/airplane-ao/src/
 COPY airplane-service/airplane-biz/src/ airplane-service/airplane-biz/src/
@@ -59,7 +66,7 @@ COPY airplane-service/airplane-bo/src/ airplane-service/airplane-bo/src/
 COPY airplane-service/airplane-boot/src/ airplane-service/airplane-boot/src/
 COPY airplane-service/airplane-common/src/ airplane-service/airplane-common/src/
 
-# 构建（构建 airplane-boot 及其所有依赖模块）
+# 构建（构建 airplane-boot，atbs-tools 已安装到本地仓库）
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
     mvn clean package -DskipTests -pl airplane-service/airplane-boot -am -B -Drevision=release-1.0.0
 

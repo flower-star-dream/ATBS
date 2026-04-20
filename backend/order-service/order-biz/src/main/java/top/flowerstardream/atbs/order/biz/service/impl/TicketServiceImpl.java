@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import top.flowerstardream.atbs.order.ao.req.TicketPageQueryREQ;
 import top.flowerstardream.atbs.order.ao.req.TicketStatusChangeREQ;
 import top.flowerstardream.atbs.order.ao.res.OrderRES;
@@ -30,6 +31,7 @@ import top.flowerstardream.atbs.order.common.enums.OrderStatus;
 import top.flowerstardream.atbs.order.common.enums.TicketEvent;
 import top.flowerstardream.atbs.order.common.enums.TicketStatus;
 import top.flowerstardream.base.annotation.AutoStateMachine;
+import top.flowerstardream.base.annotation.RedissonLock;
 import top.flowerstardream.base.ao.res.BaseStatusRES;
 import top.flowerstardream.base.result.PageResult;
 import top.flowerstardream.base.state.StateMachine;
@@ -81,6 +83,8 @@ public class TicketServiceImpl extends ServiceImpl<TicketMapper, TicketEO> imple
      * @param ticketDTO 机票请求信息
      */
     @Override
+    @RedissonLock(key = "'ticket:create:' + #ticketDTO.getOrderId()", waitTime = 5, leaseTime = 30)
+    @Transactional(rollbackFor = Exception.class)
     public void createTickets(TicketDTO ticketDTO) {
         // 1. 调用列车服务查询余票并预订座位
         ReserveSeatDTO reserveSeatDTO = ReserveSeatDTO.builder()
@@ -220,6 +224,7 @@ public class TicketServiceImpl extends ServiceImpl<TicketMapper, TicketEO> imple
      * @param req 状态变更请求
      */
     @Override
+    @RedissonLock(key = "'ticket:status:' + #req.getId()", waitTime = 3, leaseTime = 30)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void updateTicketStatus(TicketStatusChangeREQ req) {
         if (req == null) {
@@ -257,6 +262,8 @@ public class TicketServiceImpl extends ServiceImpl<TicketMapper, TicketEO> imple
      * @param userId 用户ID
      */
     @Override
+    @RedissonLock(key = "'ticket:cancel:' + #ticketId", waitTime = 5, leaseTime = 30)
+    @Transactional(rollbackFor = Exception.class)
     public void cancelTicket(Long ticketId, Long userId) {
         // 验证机票归属
         TicketEO ticketEO = ticketMapper.selectById(ticketId);
@@ -316,6 +323,8 @@ public class TicketServiceImpl extends ServiceImpl<TicketMapper, TicketEO> imple
      * @param cancelTicketDTO  订单信息
      */
     @Override
+    @RedissonLock(key = "'ticket:cancelByOrder:' + #cancelTicketDTO.getOrderId()", waitTime = 5, leaseTime = 30)
+    @Transactional(rollbackFor = Exception.class)
     public void cancelTicketByOrder(CancelTicketDTO cancelTicketDTO) {
         LambdaQueryWrapper<TicketEO> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(TicketEO::getOrderId, cancelTicketDTO.getOrderId());

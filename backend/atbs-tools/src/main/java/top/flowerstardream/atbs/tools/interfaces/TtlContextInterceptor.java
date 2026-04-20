@@ -49,7 +49,7 @@ public class TtlContextInterceptor implements HandlerInterceptor {
         // 1. 创建TTL上下文, 设置traceId
         RequestContext ctx = new RequestContext();
         String path = request.getRequestURI();
-        String traceId = request.getHeader(OPERATOR_ID);
+        String traceId = request.getHeader(TRACE_ID);
         log.info("【TTL拦截器】traceId: {}", traceId);
         if (traceId == null) {
             log.warn("【TTL拦截器】traceId为空, 创建traceId");
@@ -70,6 +70,7 @@ public class TtlContextInterceptor implements HandlerInterceptor {
                 return true;
             }
             log.error("【TTL拦截器】业务端为空");
+            TtlContextHolder.set(ctx);
             return false;
         }
         int clientTypeHeader = Integer.parseInt(clientTypeHeaderStr);
@@ -129,8 +130,9 @@ public class TtlContextInterceptor implements HandlerInterceptor {
                 extraData.put(JwtClaimsConstant.ROLES, roles);
                 ctx.setExtraData(extraData);
             }
-            TtlContextHolder.set(ctx);
         }
+        TtlContextHolder.set(ctx);
+        log.info("【TTL拦截器】TTL上下文: {}，放行", ctx);
         // 7. 放行
         return true;
     }

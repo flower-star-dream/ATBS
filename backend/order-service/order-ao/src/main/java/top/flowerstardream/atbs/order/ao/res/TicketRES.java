@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.flowerstardream.atbs.order.common.enums.TicketStatus;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -71,7 +72,7 @@ public class TicketRES implements Serializable {
      * 机票状态
      */
     @Schema(description = "机票状态")
-    private Integer status;
+    private TicketStatus status;
 
     /**
      * 票价

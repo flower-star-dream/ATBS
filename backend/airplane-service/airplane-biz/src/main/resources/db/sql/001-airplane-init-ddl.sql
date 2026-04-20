@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `atbs_route_stations` (
 
 CREATE TABLE IF NOT EXISTS `atbs_schedule` (
   `id` bigint NOT NULL COMMENT '班次号',
-  `train_id` bigint NOT NULL COMMENT '飞机号',
+  `airplane_id` bigint NOT NULL COMMENT '飞机号',
   `route_id` bigint NOT NULL COMMENT '航线号',
   `available_tickets` int NOT NULL COMMENT '余票',
   `start_time` datetime NOT NULL COMMENT '出发时间',

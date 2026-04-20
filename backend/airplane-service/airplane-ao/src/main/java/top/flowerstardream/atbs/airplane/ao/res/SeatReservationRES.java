@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import top.flowerstardream.base.ao.res.BaseMgmtRES;
+import top.flowerstardream.base.state.BaseStatus;
 
 import java.io.Serializable;
 
@@ -33,6 +34,6 @@ public class SeatReservationRES extends BaseMgmtRES {
     private Integer seatNum;
 
     @Schema(description = "预订状态")
-    private Integer bookingStatus;
+    private BaseStatus bookingStatus;
 
 }

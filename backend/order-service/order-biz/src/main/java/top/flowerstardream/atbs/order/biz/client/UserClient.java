@@ -13,7 +13,7 @@ import java.util.List;
  * @Date: 2024/11/11
  * @Description: 用户服务Feign客户端
  */
-@FeignClient(name = "atbs-user", path = "/api/internal/v1/user")
+@FeignClient(name = "user-service", path = "/api/internal/v1/user")
 public interface UserClient {
 
     /**

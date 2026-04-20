@@ -12,6 +12,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import top.flowerstardream.atbs.order.bo.eo.OrderEO;
 import top.flowerstardream.atbs.order.common.enums.OrderEvent;
 import top.flowerstardream.atbs.order.common.enums.OrderStatus;
 import top.flowerstardream.base.annotation.AutoStateMachine;
+import top.flowerstardream.base.annotation.RedissonLock;
 import top.flowerstardream.base.ao.res.BaseStatusRES;
 import top.flowerstardream.base.result.PageResult;
 import top.flowerstardream.base.state.BaseEvent;
@@ -97,6 +99,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
     private IOrderService self;
 
     @Override
+    @RedissonLock(key = "'order:create:' + #userId", waitTime = 3, leaseTime = 10)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void createOrder(OrderREQ req) {
         Long userId = getOperatorId();
         // 参数校验
@@ -136,8 +140,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
         ticketDTO.setMoney(price);
         createOrderAndTicket(ticketDTO, orderEO);
     }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
+    
     private void createOrderAndTicket(TicketDTO ticketDTO, OrderEO orderEO) {
         if (!self.save(orderEO)) {
             throw ORDER_CREATE_FAILED.toException();
@@ -166,6 +169,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
     }
 
     @Override
+    @RedissonLock(key = "'order:status:' + #req.getId()", waitTime = 3, leaseTime = 30)
     @Transactional(rollbackFor = Exception.class)
     public void updateOrderStatus(OrderStatusREQ req){
         // 参数校验
@@ -199,6 +203,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
     }
 
     @Override
+    @RedissonLock(key = "'order:cancel:' + #orderId", waitTime = 5, leaseTime = 30)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void cancelOrder(Long orderId, Long userId){
         // 参数校验
@@ -312,6 +317,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
      * @param newTotalPrice 新的总价
      */
     @Override
+    @RedissonLock(key = "'order:price:' + #orderId", waitTime = 3, leaseTime = 30)
+    @Transactional(rollbackFor = Exception.class)
     public void updateTotalPrice(Long orderId, BigDecimal newTotalPrice) {
         if (orderId == null || newTotalPrice == null) {
             throw ORDER_PERMISSION_DENIED.toException();
@@ -339,6 +346,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
      * @return
      */
     @Override
+    @RedissonLock(key = "'order:payment:' + #ordersPaymentREQ.getOrderId()", waitTime = 10, leaseTime = 60)
+    @Transactional(rollbackFor = Exception.class)
     public OrderPaymentRES payment(OrdersPaymentREQ ordersPaymentREQ) {
         if (ordersPaymentREQ == null) {
             throw PARAM_ERROR.toException();
@@ -382,6 +391,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
      * @param orderId
      */
     @Override
+    @RedissonLock(key = "'order:refund:' + #orderId", waitTime = 5, leaseTime = 60)
     public void orderRefund(Long orderId){
         if (orderId == null) {
             throw PARAM_ERROR.toException();
@@ -423,6 +433,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEO> implemen
      * @param outTradeNo
      */
     @Override
+    @RedissonLock(key = "'order:paySuccess:' + #outTradeNo", waitTime = 5, leaseTime = 30)
     public void paySuccess(String outTradeNo, BigDecimal amount) {
         // 根据订单号查询订单
         OrderEO orderEO = self.getById(Long.valueOf(outTradeNo));

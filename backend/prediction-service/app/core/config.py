@@ -150,38 +150,7 @@ class JwtProperties(BaseModel):
     endpoints: JwtEndpointsProperties = Field(default_factory=JwtEndpointsProperties, description="Endpoint 配置")
 
 
-class CorsProperties(BaseModel):
-    """CORS 跨域配置 - 对应 cors.* (参考 Java CorsProperties)"""
-    allow_origins: List[str] = Field(default_factory=lambda: ["*"], alias="allow-origins", description="允许的跨域来源")
-    allow_methods: List[str] = Field(default_factory=lambda: ["*"], alias="allow-methods", description="允许的HTTP方法")
-    allow_headers: List[str] = Field(default_factory=lambda: ["*"], alias="allow-headers", description="允许的请求头")
-    expose_headers: List[str] = Field(default_factory=list, alias="expose-headers", description="暴露的响应头")
-    allow_credentials: bool = Field(default=True, alias="allow-credentials", description="是否允许携带凭证")
-    max_age: int = Field(default=3600, alias="max-age", description="预检请求缓存时间(秒)")
 
-    @field_validator("allow_origins", mode="before")
-    @classmethod
-    def parse_origins(cls, v):
-        """解析来源列表（支持字符串或列表）"""
-        if isinstance(v, str):
-            try:
-                import json
-                return json.loads(v)
-            except:
-                return [v]
-        return v
-
-    @field_validator("allow_methods", "allow_headers", "expose_headers", mode="before")
-    @classmethod
-    def parse_string_list(cls, v):
-        """解析字符串列表（支持字符串或列表）"""
-        if isinstance(v, str):
-            try:
-                import json
-                return json.loads(v)
-            except:
-                return [item.strip() for item in v.split(",") if item.strip()]
-        return v
 
 
 class LoggingLevelProperties(BaseModel):
@@ -359,8 +328,7 @@ class YamlConfigSettingsSource(PydanticBaseSettingsSource):
             "prediction": "prediction",
             # JWT 配置
             "jwt": "jwt",
-            # CORS 配置
-            "cors": "cors",
+        
             # Logging 配置
             "logging": "logging",
         }
@@ -401,7 +369,7 @@ class AppConfig(BaseSettings):
     training: TrainingProperties = Field(default_factory=TrainingProperties, description="训练任务配置")
     auto_retrain: AutoRetrainProperties = Field(default_factory=AutoRetrainProperties, alias="auto-retrain", description="自动重训配置")
     jwt: JwtProperties = Field(default_factory=JwtProperties, description="JWT 配置")
-    cors: CorsProperties = Field(default_factory=CorsProperties, description="CORS 配置")
+
     logging: LoggingProperties = Field(default_factory=LoggingProperties, description="日志配置")
 
     # ========== 派生属性（保持向后兼容）==========
@@ -532,35 +500,7 @@ class AppConfig(BaseSettings):
         """JWT Token 前缀 - 固定为 Bearer"""
         return "Bearer "
 
-    @property
-    def cors_allow_origins(self) -> List[str]:
-        """CORS 允许的来源"""
-        return self.cors.allow_origins
 
-    @property
-    def cors_allow_methods(self) -> List[str]:
-        """CORS 允许的HTTP方法"""
-        return self.cors.allow_methods
-
-    @property
-    def cors_allow_headers(self) -> List[str]:
-        """CORS 允许的请求头"""
-        return self.cors.allow_headers
-
-    @property
-    def cors_expose_headers(self) -> List[str]:
-        """CORS 暴露的响应头"""
-        return self.cors.expose_headers
-
-    @property
-    def cors_allow_credentials(self) -> bool:
-        """CORS 是否允许携带凭证"""
-        return self.cors.allow_credentials
-
-    @property
-    def cors_max_age(self) -> int:
-        """CORS 预检请求缓存时间(秒)"""
-        return self.cors.max_age
 
     @property
     def base_dir(self) -> Path:
@@ -643,7 +583,7 @@ __all__ = [
     "JwtTokenConfig",
     "JwtEndpointsProperties",
     "JwtEndpointConfig",
-    "CorsProperties",
+
     "LoggingProperties",
     "LoggingLevelProperties",
     "LoggingFileProperties",

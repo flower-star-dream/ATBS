@@ -229,14 +229,14 @@ public class SeatReservationServiceImpl extends BaseServiceImpl<SeatReservationM
         return pageResult;
     }
 
-    private SeatReservationEO getSeatReservationEO(Long scheduleId, Integer seatNum, Integer bookingStatus){
+    private SeatReservationEO getSeatReservationEO(Long scheduleId, Integer seatNum, BaseStatus bookingStatus){
         LambdaQueryWrapper<SeatReservationEO> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(SeatReservationEO::getScheduleId, scheduleId)
                 .eq(SeatReservationEO::getSeatNum, seatNum)
                 .eq(SeatReservationEO::getStatus, bookingStatus) ;
         return seatReservationMapper.selectOne(queryWrapper);
     }
-    private void validateSeatReservationIsExist(Long scheduleId, Integer seatNum, Integer bookingStatus){
+    private void validateSeatReservationIsExist(Long scheduleId, Integer seatNum, BaseStatus bookingStatus){
         SeatReservationEO seatReservationEO = getSeatReservationEO(scheduleId, seatNum, bookingStatus);
         if (seatReservationEO != null) {
             throw SEAT_RESERVATION_ALREADY_EXISTS.toException();

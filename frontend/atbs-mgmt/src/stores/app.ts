@@ -89,12 +89,12 @@ export const useAppStore = defineStore('app', () => {
         {
           path: '/station',
           title: '机场管理',
-          icon: 'Location',
+          icon: 'AirportIcon',
           children: [
             {
               path: '/station/list',
               title: '机场列表',
-              icon: 'Location'
+              icon: 'AirportIcon'
             }
           ]
         },

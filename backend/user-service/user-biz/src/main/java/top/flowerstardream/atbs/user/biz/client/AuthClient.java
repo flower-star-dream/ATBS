@@ -17,13 +17,13 @@ import java.util.Map;
  * @Date: 2026/03/19/04:45
  * @Description: 认证服务客户端
  */
-@FeignClient(name = "auth-service", path = "api/all/v1/auth")
+@FeignClient(name = "auth-service", path = "api/all/v1/auth/user")
 public interface AuthClient extends IUserResolveService {
     /**
      * 同步用户信息
      * @param userSynchronizeREQ
      */
-    @GetMapping("/user/synchronization")
+    @GetMapping("/synchronization")
     Result<Long> synchronizationUserInfo(@RequestParam UserSynchronizeREQ userSynchronizeREQ);
 
     /**

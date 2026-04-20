@@ -48,7 +48,7 @@ const oauth2Config: Record<string, OAuth2Config> = {
   },
   // 测试环境 OAuth2 配置
   staging: {
-    authBaseUrl: 'https://atbs.flower-star-dream.top',
+    authBaseUrl: 'https://atbs-backend.flower-star-dream.top',
     clientId: 'mgmt-client',
     clientSecret: 'mgmt-secret',
     scope: 'openid profile read write'
@@ -92,8 +92,8 @@ const envConfigs: Record<string, Partial<Config>> = {
 
   // 测试环境特定配置
   staging: {
-    baseUrl: 'https://atbs.flower-star-dream.top',
-    ossUrl: 'http://103.115.43.55:9000',
+    baseUrl: 'https://atbs-backend.flower-star-dream.top',
+    ossUrl: 'https://oss.flower-star-dream.top',
     mock: false,
     debug: true,
     title: '飞机订票系统-后端管理 - 测试环境',
@@ -104,7 +104,7 @@ const envConfigs: Record<string, Partial<Config>> = {
   // 生产环境特定配置
   production: {
     baseUrl: 'https://atbs.flower-star-dream.top',
-    ossUrl: 'http://103.115.43.55:9000',
+    ossUrl: 'https://oss.flower-star-dream.top',
     timeout: 30000,
     mock: false,
     debug: false,

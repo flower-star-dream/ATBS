@@ -28,7 +28,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("飞机订票系统API")
                         .version("1.0.0")
-                        .description("火机订票系统文档")
+                        .description("飞机订票系统文档")
                         .contact(new Contact()
                                 .name("花海")
                                 .email("flowerstardream@top")

@@ -382,10 +382,11 @@ jwt:
   secret-key: ""
   token-header: "Bearer "
 
-cors:
-  origins:
-    - "http://localhost:3000"
-    - "http://localhost:8080"
+flower:
+    cors:
+      origins:
+        - "http://localhost:3000"
+        - "http://localhost:8080"
 ```
 
 ### 配置类使用

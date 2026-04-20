@@ -47,11 +47,18 @@ COPY airplane-service/airplane-common/pom.xml airplane-service/airplane-common/
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
     mvn install -N -B -Drevision=release-1.0.0
 
-# 下载依赖（只处理 user-boot，依赖从私库拉取）
-RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn dependency:go-offline -B -pl user-service/user-boot -Drevision=release-1.0.0
+# 复制 atbs-tools 源码
+COPY atbs-tools/src/ atbs-tools/src/
 
-# 复制 user-service 源码（只构建这个模块）
+# 先安装 atbs-tools 到本地仓库（确保本地修改覆盖私库版本）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn clean install -DskipTests -pl atbs-tools -B -Drevision=release-1.0.0
+
+# 下载依赖（处理 user-boot 及其依赖）
+RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
+    mvn dependency:go-offline -B -pl user-service/user-boot -am -Drevision=release-1.0.0
+
+# 复制 user-service 源码
 COPY user-service/user-api/src/ user-service/user-api/src/
 COPY user-service/user-ao/src/ user-service/user-ao/src/
 COPY user-service/user-biz/src/ user-service/user-biz/src/
@@ -59,9 +66,9 @@ COPY user-service/user-bo/src/ user-service/user-bo/src/
 COPY user-service/user-boot/src/ user-service/user-boot/src/
 COPY user-service/user-common/src/ user-service/user-common/src/
 
-# 构建（只构建 user-boot，依赖从私库拉取）
+# 构建（构建 user-boot，atbs-tools 已安装到本地仓库）
 RUN --mount=type=secret,id=settings,dst=/root/.m2/settings.xml,required=false \
-    mvn clean package -DskipTests -pl user-service/user-boot -B -Drevision=release-1.0.0
+    mvn clean package -DskipTests -pl user-service/user-boot -am -B -Drevision=release-1.0.0
 
 # 阶段二：运行阶段
 FROM eclipse-temurin:17-jre-alpine

@@ -3,14 +3,20 @@ package top.flowerstardream.atbs.tools.interfaces;
 import cn.hutool.core.lang.UUID;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import top.flowerstardream.atbs.tools.constants.ClientType;
+import top.flowerstardream.atbs.tools.constants.JwtClaimsConstant;
 import top.flowerstardream.base.context.RequestContext;
 import top.flowerstardream.base.utils.TtlContextHolder;
 
 import static top.flowerstardream.atbs.tools.constants.TransmitConstant.CLIENT_TYPE;
 import static top.flowerstardream.base.constant.CommonConstant.*;
+import static top.flowerstardream.base.utils.GetInfoUtil.*;
 
 /**
  * @Author: 花海
@@ -22,8 +28,7 @@ import static top.flowerstardream.base.constant.CommonConstant.*;
 public class FeignInterceptor implements RequestInterceptor {
     @Override
     public void apply(RequestTemplate template) {
-        RequestContext ctx = TtlContextHolder.get();
-        String traceId = ctx == null ? MDC.get("traceId") : ctx.getTraceId();
+        String traceId = getTraceId() == null ? MDC.get("traceId") : getTraceId();
         if (traceId == null) {
             traceId = UUID.randomUUID().toString(true);
         }
@@ -32,9 +37,19 @@ public class FeignInterceptor implements RequestInterceptor {
         template.header(TRACE_ID, traceId);
 
         /* 2. 你想额外塞的任意字段 */
-        template.header(OPERATOR_ID, ctx == null ? "" : ctx.getOperatorId().toString());
-        template.header(OPERATOR_NAME, ctx == null ? "" : ctx.getOperatorName());
-        template.header(CLIENT_TYPE, ctx == null ? "" : ctx.getExtra(CLIENT_TYPE, Integer.class).toString());
+        template.header(OPERATOR_ID, getOperatorId() == null ? "" : getOperatorId().toString());
+        template.header(OPERATOR_NAME, getOperatorName());
+        template.header(CLIENT_TYPE, ClientType.SYSTEM.getCode().toString());
+
+        /* 3. 传递Authorization token */
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String authHeader = request.getHeader(AUTHORIZATION);
+            if (authHeader != null && !authHeader.isEmpty()) {
+                template.header(AUTHORIZATION, authHeader);
+            }
+        }
 
         log.debug("【Feign 发送请求】url={}, headers={}", template.url(), template.headers());
     }

@@ -17,7 +17,6 @@
           background-color="#304156"
           text-color="#bfcbd9"
           active-text-color="#409EFF"
-          unique-opened
         >
           <!-- 菜单列表 - 支持三级菜单结构 -->
           <template v-for="item in menuList" :key="item.path">

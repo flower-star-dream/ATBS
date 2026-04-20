@@ -14,7 +14,7 @@ import java.util.List;
  * @date: 2025/11/25 16:28
  * @description: 订单服务客户端接口
  */
-@FeignClient(name = "atbs-order", path = "/api/internal/v1/order")
+@FeignClient(name = "order-service", path = "/api/internal/v1/order")
 public interface OrderClient {
     /**
      * 获取车票对象
